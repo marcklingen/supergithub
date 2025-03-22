@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDiscussionDetails, useRepositoryDiscussions } from '@/lib/github';
+import { useDiscussionDetails, useRepositoryDiscussions, Discussion, DiscussionDetailsResponse } from '@/lib/github';
 import { DiscussionSkeleton } from './discussion-components/DiscussionSkeleton';
 import { DiscussionError } from './discussion-components/DiscussionError';
 import { DiscussionNotFound } from './discussion-components/DiscussionNotFound';
@@ -13,7 +13,7 @@ import { CommentsList } from './discussion-components/CommentsList';
 import { CommentComposer } from './discussion-components/CommentComposer';
 
 interface DiscussionDetailProps {
-  prefetchedDiscussions?: any[];
+  prefetchedDiscussions?: Discussion[];
 }
 
 const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussions = [] }) => {

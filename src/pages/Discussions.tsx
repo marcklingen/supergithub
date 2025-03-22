@@ -11,7 +11,7 @@ import EmptyRepositoryState from '@/components/discussions/EmptyRepositoryState'
 import TokenRequiredState from '@/components/discussions/TokenRequiredState';
 import DiscussionHeader from '@/components/discussions/DiscussionHeader';
 import KeyboardShortcutBar from '@/components/keyboard/KeyboardShortcutBar';
-import { useRepositoryDiscussions } from '@/lib/github';
+import { useRepositoryDiscussions, Discussion } from '@/lib/github';
 
 const Discussions = () => {
   const { activeRepository, activeCategory } = useRepo();
@@ -63,7 +63,7 @@ const Discussions = () => {
   };
   
   // Prefetch the discussions data for the DiscussionDetail component
-  const prefetchedDiscussions = discussionsData?.repository?.discussions?.nodes || [];
+  const prefetchedDiscussions: Discussion[] = discussionsData?.repository?.discussions?.nodes || [];
   
   return (
     <div className="flex-1 p-8 pb-16">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepo } from '@/contexts/RepoContext';
-import { useRepositoryDiscussions } from '@/lib/github';
+import { useRepositoryDiscussions, Discussion, DiscussionsResponse } from '@/lib/github';
 import { convertEmojiText } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { 
@@ -13,8 +13,7 @@ import {
   ArrowUp,
   Loader2,
   SortAsc,
-  SortDesc,
-  Filter
+  SortDesc
 } from 'lucide-react';
 import { 
   Card, 
@@ -31,42 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-
-interface Discussion {
-  id: string;
-  number: number;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  upvoteCount: number;
-  author: {
-    login: string;
-    avatarUrl: string;
-  };
-  comments: {
-    totalCount: number;
-  };
-  labels?: {
-    nodes: {
-      id: string;
-      name: string;
-      color: string;
-    }[];
-  };
-}
 
 type SortField = 'updatedAt' | 'createdAt' | 'upvoteCount';
 type SortOrder = 'asc' | 'desc';
 
 interface DiscussionListProps {
-  prefetchedDiscussions?: any[];
+  prefetchedDiscussions?: Discussion[];
 }
 
 const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions = [] }) => {

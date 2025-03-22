@@ -2,6 +2,113 @@ import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
 
+// Define common types for GitHub API responses
+export interface GitHubRepository {
+  id: string;
+  name: string;
+  owner: {
+    login: string;
+  };
+  discussionCategories?: {
+    nodes: DiscussionCategory[];
+  };
+  discussions?: {
+    totalCount: number;
+    pageInfo: {
+      hasNextPage: boolean;
+      endCursor: string;
+    };
+    nodes: Discussion[];
+  };
+  discussion?: Discussion;
+  hasDiscussionsEnabled?: boolean;
+}
+
+export interface DiscussionCategory {
+  id: string;
+  name: string;
+  emoji: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Discussion {
+  id: string;
+  number: number;
+  title: string;
+  bodyHTML?: string;
+  createdAt: string;
+  updatedAt: string;
+  upvoteCount: number;
+  isAnswered?: boolean;
+  author: {
+    login: string;
+    avatarUrl: string;
+    url?: string;
+  };
+  category?: {
+    id: string;
+    name: string;
+    emoji: string;
+  };
+  comments: {
+    totalCount: number;
+    pageInfo?: {
+      hasNextPage: boolean;
+      endCursor: string;
+    };
+    nodes: Comment[];
+  };
+  labels?: {
+    nodes: {
+      id: string;
+      name: string;
+      color: string;
+    }[];
+  };
+}
+
+export interface Comment {
+  id: string;
+  author: {
+    login: string;
+    avatarUrl: string;
+    url?: string;
+  };
+  bodyHTML: string;
+  createdAt: string;
+  upvoteCount: number;
+  isAnswer?: boolean;
+  replyTo?: {
+    id: string;
+  };
+  replies?: {
+    totalCount: number;
+    nodes: Comment[];
+  };
+  reactions?: {
+    nodes: {
+      content: string;
+    }[];
+  };
+}
+
+export interface DiscussionCategoriesResponse {
+  repository: GitHubRepository;
+  _orgAccessError?: boolean;
+}
+
+export interface DiscussionsResponse {
+  repository: GitHubRepository;
+  _orgAccessError?: boolean;
+}
+
+export interface DiscussionDetailsResponse {
+  repository: GitHubRepository;
+  _orgAccessError?: boolean;
+}
+
 // Make queryClient globally accessible for prefetching
 declare global {
   interface Window {
@@ -159,7 +266,7 @@ export function useUserRepositories(token?: string | null) {
 export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string | null) {
   return useQuery({
     queryKey: ['repositoryDiscussionCategories', owner, name, token],
-    queryFn: async () => {
+    queryFn: async (): Promise<DiscussionCategoriesResponse> => {
       if (!token) {
         console.error('No GitHub token provided for useRepositoryDiscussionCategories');
         throw new Error('GitHub token is required for this operation');
@@ -199,11 +306,11 @@ export function useRepositoryDiscussions(
   first: number = 10,
   after?: string,
   token?: string | null,
-  options?: Partial<UseQueryOptions>
+  options?: Partial<UseQueryOptions<DiscussionsResponse, Error>>
 ) {
   return useQuery({
     queryKey: ['repositoryDiscussions', owner, name, categoryId, after],
-    queryFn: async () => {
+    queryFn: async (): Promise<DiscussionsResponse> => {
       if (!token) {
         throw new Error('GitHub token is required for this operation');
       }
@@ -285,11 +392,11 @@ export function useDiscussionDetails(
   name: string, 
   number: number,
   token?: string | null,
-  options?: Partial<UseQueryOptions>
+  options?: Partial<UseQueryOptions<DiscussionDetailsResponse, Error>>
 ) {
   return useQuery({
     queryKey: ['discussionDetails', owner, name, number, token],
-    queryFn: async () => {
+    queryFn: async (): Promise<DiscussionDetailsResponse> => {
       if (!token) {
         throw new Error('GitHub token is required for this operation');
       }
