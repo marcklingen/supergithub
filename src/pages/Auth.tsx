@@ -1,18 +1,17 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2 } from 'lucide-react';
+import { GithubIcon, Loader2, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Schema for login form validation
 const loginSchema = z.object({
@@ -25,8 +24,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isDevMode, setIsDevMode] = useState(false);
-  const [searchParams] = useSearchParams();
-  const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -47,36 +44,11 @@ const Auth = () => {
     console.log('Development mode:', isDevelopment);
   }, []);
 
-  // Process hash fragment for password reset tokens
-  useEffect(() => {
-    // Check for reset password hash
-    const hash = window.location.hash;
-    if (hash && hash.includes('#access_token=')) {
-      // Parse the hash fragment
-      const hashParams = new URLSearchParams(hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const type = hashParams.get('type');
-      
-      if (accessToken && type === 'recovery') {
-        // Handle password recovery flow
-        setResetSuccess(true);
-        // Clean the URL and remove hash
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        toast({
-          title: "Password Reset Successful",
-          description: "You can now log in with your new password",
-        });
-      }
-    }
-  }, [toast]);
-
   // Extract error from URL if present
   useEffect(() => {
-    // Check for errors in URL params
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
+    const url = new URL(window.location.href);
+    const error = url.searchParams.get('error');
+    const errorDescription = url.searchParams.get('error_description');
     
     if (error) {
       toast({
@@ -88,7 +60,7 @@ const Auth = () => {
       // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [searchParams, toast]);
+  }, [toast]);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -179,36 +151,6 @@ const Auth = () => {
     }
   }
 
-  // Handle password reset request
-  async function handleResetPassword(email: string) {
-    try {
-      setLoading(true);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/auth',
-      });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Password reset email sent",
-        description: "Please check your email for the password reset link",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error sending reset email",
-        description: error.message || "An error occurred while sending the reset email",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Show reset password form
-  const [showResetForm, setShowResetForm] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
@@ -220,27 +162,18 @@ const Auth = () => {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {resetSuccess && (
-            <Alert className="mb-4">
-              <AlertTitle>Password Reset Successful</AlertTitle>
-              <AlertDescription>
-                You can now log in with your new password.
-              </AlertDescription>
-            </Alert>
-          )}
-
           <Button 
             variant="outline" 
             className="w-full justify-center gap-2" 
             onClick={handleGitHubSignIn}
             disabled={loading}
           >
-            {loading && !showResetForm ? (
+            {loading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <GithubIcon size={16} className="mr-2" />
             )}
-            <span>{loading && !showResetForm ? 'Signing in...' : 'Sign in with GitHub'}</span>
+            <span>{loading ? 'Signing in...' : 'Sign in with GitHub'}</span>
           </Button>
 
           {isDevMode && (
@@ -256,116 +189,64 @@ const Auth = () => {
                 </div>
               </div>
 
-              {showResetForm ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email Address</Label>
-                    <Input 
-                      id="reset-email" 
-                      placeholder="email@example.com" 
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex gap-2">
+              <Form {...form}>
+                <form className="space-y-4" onSubmit={form.handleSubmit(handleEmailSignIn)}>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="email@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-2 pt-2">
                     <Button 
-                      variant="default" 
+                      type="submit" 
+                      disabled={loading}
                       className="flex-1"
-                      onClick={() => handleResetPassword(resetEmail)}
-                      disabled={loading || !resetEmail}
                     >
                       {loading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          <span>Sending...</span>
+                          <span>Signing in...</span>
                         </>
                       ) : (
-                        <span>Send Reset Link</span>
+                        <span>Sign In</span>
                       )}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => setShowResetForm(false)}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
                       disabled={loading}
+                      className="flex-1"
+                      onClick={() => form.handleSubmit(handleEmailSignUp)()}
                     >
-                      Back to Login
+                      Sign Up
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <Form {...form}>
-                    <form className="space-y-4" onSubmit={form.handleSubmit(handleEmailSignIn)}>
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="email@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="flex justify-end">
-                        <Button 
-                          type="button" 
-                          variant="link" 
-                          className="text-xs px-0"
-                          onClick={() => setShowResetForm(true)}
-                        >
-                          Forgot password?
-                        </Button>
-                      </div>
-
-                      <div className="flex gap-2 pt-2">
-                        <Button 
-                          type="submit" 
-                          disabled={loading}
-                          className="flex-1"
-                        >
-                          {loading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              <span>Signing in...</span>
-                            </>
-                          ) : (
-                            <span>Sign In</span>
-                          )}
-                        </Button>
-                        
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={loading}
-                          className="flex-1"
-                          onClick={() => form.handleSubmit(handleEmailSignUp)()}
-                        >
-                          Sign Up
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </>
-              )}
+                </form>
+              </Form>
             </div>
           )}
         </CardContent>
