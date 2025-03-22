@@ -61,7 +61,7 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
   // Use prefetched discussions if available, otherwise use fetched data
   const discussions = prefetchedDiscussions.length > 0 
     ? prefetchedDiscussions 
-    : discussionsData?.repository?.discussions?.nodes || [];
+    : (discussionsData?.repository?.discussions?.nodes || []);
   
   const currentIndex = discussions.findIndex(
     (discussion) => discussion.number === discussionNumber

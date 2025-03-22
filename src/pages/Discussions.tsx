@@ -10,6 +10,7 @@ import GitHubTokenDialog from '@/components/discussions/GitHubTokenDialog';
 import EmptyRepositoryState from '@/components/discussions/EmptyRepositoryState';
 import TokenRequiredState from '@/components/discussions/TokenRequiredState';
 import DiscussionHeader from '@/components/discussions/DiscussionHeader';
+import KeyboardShortcutBar from '@/components/keyboard/KeyboardShortcutBar';
 import { useRepositoryDiscussions } from '@/lib/github';
 
 const Discussions = () => {
@@ -65,7 +66,7 @@ const Discussions = () => {
   const prefetchedDiscussions = discussionsData?.repository?.discussions?.nodes || [];
   
   return (
-    <div className="flex-1 p-8">
+    <div className="flex-1 p-8 pb-16">
       <div className="max-w-5xl mx-auto mt-8">
         <DiscussionHeader
           activeCategory={activeCategory}
@@ -96,6 +97,8 @@ const Discussions = () => {
           </>
         )}
       </div>
+      
+      <KeyboardShortcutBar />
     </div>
   );
 };

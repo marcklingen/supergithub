@@ -7,6 +7,7 @@ import RepositoryDropdown from './RepositoryDropdown';
 import DiscussionCategories from './DiscussionCategories';
 import UserProfile from './UserProfile';
 import ThemeSwitcher from './ThemeSwitcher';
+import KeyboardShortcutBar from '@/components/keyboard/KeyboardShortcutBar';
 
 const RepoSidebar = () => {
   const { user } = useAuth();

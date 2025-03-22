@@ -419,16 +419,6 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
           </Button>
         </div>
       )}
-      
-      <div className="mt-8 text-sm text-muted-foreground text-center">
-        <p>
-          Use <kbd className="px-1.5 py-0.5 rounded bg-muted border">j</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-muted border">k</kbd> or arrow keys to navigate discussions, 
-          <kbd className="px-1.5 py-0.5 rounded bg-muted border">Enter</kbd> to select
-        </p>
-        <p className="mt-2">
-          When viewing a discussion, use <kbd className="px-1.5 py-0.5 rounded bg-muted border">j</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-muted border">k</kbd> or arrow keys to navigate between threads
-        </p>
-      </div>
     </div>
   );
 };
