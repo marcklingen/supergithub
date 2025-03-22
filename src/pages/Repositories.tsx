@@ -181,7 +181,7 @@ const Repositories = () => {
       toast({
         title: "Warning",
         description: "GitHub tokens typically start with 'ghp_' or 'github_pat_'. Please check your token.",
-        variant: "warning"
+        variant: "default"
       });
     }
 
@@ -814,3 +814,4 @@ const Repositories = () => {
 };
 
 export default Repositories;
+
