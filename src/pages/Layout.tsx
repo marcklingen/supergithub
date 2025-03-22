@@ -31,7 +31,7 @@ const Layout = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <RepoSidebar />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pt-0">
           <Outlet />
         </div>
       </div>
