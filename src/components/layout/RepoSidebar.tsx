@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRepo, DiscussionCategory } from '@/contexts/RepoContext';
@@ -7,14 +6,11 @@ import { useRepositoryDiscussionCategories } from '@/lib/github';
 import { 
   FolderKanban,
   MessageSquare,
-  BookOpen,
-  ChevronRight, 
   Github,
   Loader2,
   AlertTriangle,
   User,
-  LogOut,
-  Settings
+  LogOut
 } from 'lucide-react';
 import {
   Sidebar,
@@ -26,7 +22,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
   SidebarFooter
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -109,7 +104,7 @@ const RepoSidebar = () => {
   };
   
   if (!user) {
-    return <Sidebar className="border-r">
+    return <Sidebar className="border-r" collapsible="none">
       <SidebarHeader className="p-4">
         <h3 className="text-lg font-semibold">SuperGitHub</h3>
       </SidebarHeader>
@@ -128,7 +123,7 @@ const RepoSidebar = () => {
   }
   
   if (repositories.length === 0) {
-    return <Sidebar className="border-r">
+    return <Sidebar className="border-r" collapsible="none">
       <SidebarHeader className="p-4">
         <h3 className="text-lg font-semibold">SuperGitHub</h3>
       </SidebarHeader>
@@ -147,12 +142,11 @@ const RepoSidebar = () => {
   }
   
   return (
-    <Sidebar className="border-r">
-      <SidebarHeader className="p-4 border-b flex items-center justify-between">
+    <Sidebar className="border-r" collapsible="none">
+      <SidebarHeader className="p-4 border-b">
         <Link to="/" className="text-lg font-semibold hover:text-primary transition-colors">
           SuperGitHub
         </Link>
-        <SidebarTrigger />
       </SidebarHeader>
       
       <SidebarContent>
@@ -167,7 +161,6 @@ const RepoSidebar = () => {
                       {activeRepository?.fullName || 'Select Repository'}
                     </span>
                   </div>
-                  <ChevronRight size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
@@ -282,7 +275,6 @@ const RepoSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       
-      {/* User avatar menu in footer */}
       <SidebarFooter className="p-4 border-t mt-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
