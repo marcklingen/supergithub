@@ -10,6 +10,7 @@ import GitHubTokenDialog from '@/components/discussions/GitHubTokenDialog';
 import EmptyRepositoryState from '@/components/discussions/EmptyRepositoryState';
 import TokenRequiredState from '@/components/discussions/TokenRequiredState';
 import DiscussionHeader from '@/components/discussions/DiscussionHeader';
+import { useRepositoryDiscussions } from '@/lib/github';
 
 const Discussions = () => {
   const { activeRepository, activeCategory } = useRepo();
@@ -19,6 +20,23 @@ const Discussions = () => {
   
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
+  
+  // Prefetch discussions when repository and category are selected
+  const { data: discussionsData } = useRepositoryDiscussions(
+    activeRepository?.owner || '',
+    activeRepository?.name || '',
+    activeCategory?.id || '',
+    50,  // Increase the number to prefetch more discussions
+    undefined,
+    githubToken,
+    {
+      enabled: Boolean(activeRepository?.owner) && 
+              Boolean(activeRepository?.name) && 
+              Boolean(activeCategory?.id) && 
+              Boolean(githubToken),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    }
+  );
   
   useEffect(() => {
     if (!githubToken) {
@@ -42,6 +60,9 @@ const Discussions = () => {
   const handleNavigateToRepositories = () => {
     navigate('/repositories');
   };
+  
+  // Prefetch the discussions data for the DiscussionDetail component
+  const prefetchedDiscussions = discussionsData?.repository?.discussions?.nodes || [];
   
   return (
     <div className="flex-1 p-8">
@@ -68,9 +89,9 @@ const Discussions = () => {
             {!activeRepository ? (
               <EmptyRepositoryState onNavigateToRepositories={handleNavigateToRepositories} />
             ) : discussionNumber ? (
-              <DiscussionDetail />
+              <DiscussionDetail prefetchedDiscussions={prefetchedDiscussions} />
             ) : (
-              <DiscussionList />
+              <DiscussionList prefetchedDiscussions={prefetchedDiscussions} />
             )}
           </>
         )}

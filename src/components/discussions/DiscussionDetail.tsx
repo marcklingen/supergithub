@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -11,7 +12,11 @@ import { DiscussionContent } from './discussion-components/DiscussionContent';
 import { CommentsList } from './discussion-components/CommentsList';
 import { CommentComposer } from './discussion-components/CommentComposer';
 
-const DiscussionDetail = () => {
+interface DiscussionDetailProps {
+  prefetchedDiscussions?: any[];
+}
+
+const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussions = [] }) => {
   const params = useParams();
   const { githubToken } = useAuth();
   const { activeRepository, activeCategory } = useRepo();
@@ -35,16 +40,28 @@ const DiscussionDetail = () => {
     githubToken
   );
   
+  // Only fetch if we don't have prefetched discussions
   const { data: discussionsData } = useRepositoryDiscussions(
     activeRepository?.owner || '',
     activeRepository?.name || '',
     activeCategory?.id || '',
     50,
     undefined,
-    githubToken
+    githubToken,
+    {
+      // Only fetch if prefetchedDiscussions is empty
+      enabled: prefetchedDiscussions.length === 0 && 
+              Boolean(activeRepository?.owner) && 
+              Boolean(activeRepository?.name) && 
+              Boolean(activeCategory?.id) && 
+              Boolean(githubToken),
+    }
   );
   
-  const discussions = discussionsData?.repository?.discussions?.nodes || [];
+  // Use prefetched discussions if available, otherwise use fetched data
+  const discussions = prefetchedDiscussions.length > 0 
+    ? prefetchedDiscussions 
+    : discussionsData?.repository?.discussions?.nodes || [];
   
   const currentIndex = discussions.findIndex(
     (discussion) => discussion.number === discussionNumber
@@ -52,6 +69,93 @@ const DiscussionDetail = () => {
   
   const prevDiscussion = currentIndex > 0 ? discussions[currentIndex - 1] : null;
   const nextDiscussion = currentIndex < discussions.length - 1 ? discussions[currentIndex + 1] : null;
+  
+  // Prefetch discussion details for adjacent discussions
+  useEffect(() => {
+    if (githubToken && activeRepository) {
+      // Prefetch the next discussion details
+      if (nextDiscussion) {
+        const prefetchNext = async () => {
+          try {
+            const queryClient = window.queryClient; // Assuming queryClient is globally accessible
+            if (queryClient) {
+              await queryClient.prefetchQuery({
+                queryKey: ['discussionDetails', activeRepository.owner, activeRepository.name, nextDiscussion.number, githubToken],
+                queryFn: () => fetch(`https://api.github.com/graphql`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${githubToken}`,
+                  },
+                  body: JSON.stringify({
+                    query: `
+                      query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
+                        repository(owner: $owner, name: $name) {
+                          discussion(number: $number) {
+                            id
+                          }
+                        }
+                      }
+                    `,
+                    variables: { 
+                      owner: activeRepository.owner, 
+                      name: activeRepository.name, 
+                      number: nextDiscussion.number 
+                    }
+                  }),
+                }).then(r => r.json()),
+              });
+            }
+          } catch (e) {
+            console.log('Prefetch error:', e);
+          }
+        };
+        
+        // Prefetch the previous discussion details
+        if (prevDiscussion) {
+          const prefetchPrev = async () => {
+            try {
+              const queryClient = window.queryClient;
+              if (queryClient) {
+                await queryClient.prefetchQuery({
+                  queryKey: ['discussionDetails', activeRepository.owner, activeRepository.name, prevDiscussion.number, githubToken],
+                  queryFn: () => fetch(`https://api.github.com/graphql`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${githubToken}`,
+                    },
+                    body: JSON.stringify({
+                      query: `
+                        query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
+                          repository(owner: $owner, name: $name) {
+                            discussion(number: $number) {
+                              id
+                            }
+                          }
+                        }
+                      `,
+                      variables: { 
+                        owner: activeRepository.owner, 
+                        name: activeRepository.name, 
+                        number: prevDiscussion.number 
+                      }
+                    }),
+                  }).then(r => r.json()),
+                });
+              }
+            } catch (e) {
+              console.log('Prefetch error:', e);
+            }
+          };
+          
+          prefetchPrev();
+        }
+        
+        prefetchNext();
+      }
+    }
+  }, [discussionNumber, activeRepository, githubToken, nextDiscussion, prevDiscussion]);
   
   const navigateTo = (discussion: any) => {
     if (discussion) {

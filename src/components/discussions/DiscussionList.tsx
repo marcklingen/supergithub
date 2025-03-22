@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,7 +65,11 @@ interface Discussion {
 type SortField = 'updatedAt' | 'createdAt' | 'upvoteCount';
 type SortOrder = 'asc' | 'desc';
 
-const DiscussionList = () => {
+interface DiscussionListProps {
+  prefetchedDiscussions?: any[];
+}
+
+const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions = [] }) => {
   const { githubToken } = useAuth();
   const { activeRepository, activeCategory } = useRepo();
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -91,44 +94,58 @@ const DiscussionList = () => {
     activeCategory?.id || '',
     10,
     cursor,
-    githubToken
+    githubToken,
+    {
+      enabled: (prefetchedDiscussions.length === 0 || cursor) && 
+              Boolean(activeRepository?.owner) && 
+              Boolean(activeRepository?.name) && 
+              Boolean(activeCategory?.id) && 
+              Boolean(githubToken)
+    }
   );
   
-  const discussions = data?.repository?.discussions?.nodes || [];
+  const initialDiscussions = prefetchedDiscussions.length > 0 
+    ? prefetchedDiscussions 
+    : (data?.repository?.discussions?.nodes || []);
   const pageInfo = data?.repository?.discussions?.pageInfo;
-  const totalCount = data?.repository?.discussions?.totalCount || 0;
+  const totalCount = data?.repository?.discussions?.totalCount || 
+                     (prefetchedDiscussions.length > 0 ? prefetchedDiscussions.length : 0);
   
   useEffect(() => {
     setCursor(undefined);
-    setAllDiscussions([]);
-    setSelectedIndex(-1);
     
-    if (activeCategory?.id && activeRepository?.owner && activeRepository?.name) {
-      refetch();
+    if (prefetchedDiscussions.length > 0) {
+      setAllDiscussions(prefetchedDiscussions);
+      setSelectedIndex(0);
+    } else {
+      setAllDiscussions([]);
+      setSelectedIndex(-1);
+      
+      if (activeCategory?.id && activeRepository?.owner && activeRepository?.name) {
+        refetch();
+      }
     }
-  }, [activeCategory?.id, activeRepository?.owner, activeRepository?.name, refetch]);
+  }, [activeCategory?.id, activeRepository?.owner, activeRepository?.name, prefetchedDiscussions, refetch]);
   
   useEffect(() => {
-    if (discussions.length > 0) {
+    if (initialDiscussions.length > 0 && prefetchedDiscussions.length === 0) {
       if (cursor) {
         setAllDiscussions(prev => {
           const existingIds = new Set(prev.map(d => d.id));
-          const newDiscussions = discussions.filter(d => !existingIds.has(d.id));
+          const newDiscussions = initialDiscussions.filter(d => !existingIds.has(d.id));
           return [...prev, ...newDiscussions];
         });
       } else {
-        setAllDiscussions(discussions);
-        // Initialize selection index to 0 when new discussions load
+        setAllDiscussions(initialDiscussions);
         setSelectedIndex(0);
       }
     }
-  }, [discussions, cursor]);
+  }, [initialDiscussions, cursor, prefetchedDiscussions]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!allDiscussions.length) return;
       
-      // Don't capture keyboard events when an input is focused
       if (document.activeElement?.tagName === 'INPUT' || 
           document.activeElement?.tagName === 'TEXTAREA' ||
           document.activeElement?.tagName === 'SELECT') {

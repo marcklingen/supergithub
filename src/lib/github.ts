@@ -2,6 +2,13 @@ import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
 
+// Make queryClient globally accessible for prefetching
+declare global {
+  interface Window {
+    queryClient: any;
+  }
+}
+
 async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   if (!token) {
     console.error('No GitHub token provided for GitHub API request');
@@ -191,7 +198,8 @@ export function useRepositoryDiscussions(
   categoryId: string,
   first: number = 10,
   after?: string,
-  token?: string | null
+  token?: string | null,
+  options?: Partial<UseQueryOptions>
 ) {
   return useQuery({
     queryKey: ['repositoryDiscussions', owner, name, categoryId, after],
@@ -268,6 +276,7 @@ export function useRepositoryDiscussions(
     enabled: Boolean(owner) && Boolean(name) && Boolean(categoryId) && Boolean(token),
     staleTime: 1000 * 60 * 5, // Keep data fresh for 5 minutes
     gcTime: 1000 * 60 * 10, // Keep unused data in cache for 10 minutes
+    ...options
   });
 }
 
@@ -275,7 +284,8 @@ export function useDiscussionDetails(
   owner: string, 
   name: string, 
   number: number,
-  token?: string | null
+  token?: string | null,
+  options?: Partial<UseQueryOptions>
 ) {
   return useQuery({
     queryKey: ['discussionDetails', owner, name, number, token],
@@ -383,6 +393,7 @@ export function useDiscussionDetails(
       return fetchGitHubAPI(query, { owner, name, number }, token);
     },
     enabled: Boolean(owner) && Boolean(name) && Boolean(number) && Boolean(token),
+    ...options
   });
 }
 
@@ -511,4 +522,11 @@ export function useAddDiscussionComment() {
       return fetchGitHubAPI(query, variables, token);
     }
   });
+}
+
+// Store the queryClient globally for prefetching
+import { QueryClient } from '@tanstack/react-query';
+if (typeof window !== 'undefined') {
+  // Check if window is defined (not in SSR)
+  window.queryClient = window.queryClient || new QueryClient();
 }
