@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -88,7 +89,7 @@ export function useUserRepositories(token?: string | null) {
 }
 
 // Example query hook for user profile
-export function useGitHubUserProfile(username: string, token?: string) {
+export function useGitHubUserProfile(username: string, token?: string | null) {
   return useQuery({
     queryKey: ['githubUser', username],
     queryFn: async () => {
@@ -115,12 +116,12 @@ export function useGitHubUserProfile(username: string, token?: string) {
       
       return fetchGitHubAPI(query, { username }, token);
     },
-    enabled: Boolean(username) && Boolean(token || GITHUB_TOKEN),
+    enabled: Boolean(username) && Boolean(token),
   });
 }
 
 // Query hook for repository discussion categories
-export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string) {
+export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string | null) {
   return useQuery({
     queryKey: ['repositoryDiscussionCategories', owner, name, token],
     queryFn: async () => {
@@ -146,7 +147,7 @@ export function useRepositoryDiscussionCategories(owner: string, name: string, t
 }
 
 // Example query hook for repository data
-export function useGitHubRepository(owner: string, name: string, token?: string) {
+export function useGitHubRepository(owner: string, name: string, token?: string | null) {
   return useQuery({
     queryKey: ['githubRepo', owner, name, token],
     queryFn: async () => {

@@ -1,42 +1,62 @@
 
-# React + Supabase + GitHub GraphQL Application
+# GitDiscuss - Superhuman for GitHub Discussions
 
-A modern web application built with React, Supabase, and GitHub's GraphQL API. This project provides a solid foundation for building scalable and performant web applications.
+A blazing-fast, keyboard-driven interface for managing GitHub Discussions built for open-source maintainers. GitDiscuss provides a Superhuman-like experience for navigating, reading, and replying to GitHub Discussions with private team collaboration features.
 
-## Features
+## 🚀 Core Features
 
-- **React**: Frontend built with React and TypeScript
-- **Supabase**: Backend with authentication, database, and storage
-- **GitHub GraphQL API**: Integration with GitHub's powerful GraphQL API
-- **Tailwind CSS**: Utility-first CSS framework for styling
-- **React Query**: Data fetching and state management
-- **React Router**: Client-side routing
+- **Lightning-Fast UI & Keyboard Navigation**
+  - Near-instant transitions with minimal mouse usage
+  - Keyboard shortcuts (Cmd+K command palette, j/k navigation)
+  - Prefetching and optimistic UI updates for desktop-like speed
 
-## Prerequisites
+- **Seamless GitHub Integration**
+  - Sign in with GitHub OAuth
+  - Access GitHub Discussions via GraphQL API
+  - Post replies directly to GitHub Discussions
+
+- **Team Collaboration Tools**
+  - Private internal comments (invisible to public GitHub repo)
+  - @Mentions & team notifications
+  - Star/pin important discussion threads
+
+- **Real-Time & Offline Capabilities**
+  - Immediate updates to internal notes and notifications
+  - Local caching for offline browsing
+  - Responsive design for all devices
+
+## 🔧 Technology Stack
+
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **Backend**: Supabase (Auth, Database, Realtime)
+- **API**: GitHub GraphQL API
+- **State Management**: React Query, Zustand
+- **UI Components**: shadcn/ui
+
+## 🚦 Getting Started
+
+### Prerequisites
 
 - Node.js (v16 or later)
 - npm or yarn
+- GitHub account (with access to Discussions)
 - Supabase account
-- GitHub account (for API access)
-
-## Getting Started
 
 ### Environment Setup
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the root directory with:
 
 ```
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GITHUB_TOKEN=your_github_personal_access_token
 ```
 
 ### Installation
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/your-repo-name.git
-   cd your-repo-name
+   git clone https://github.com/yourusername/gitdiscuss.git
+   cd gitdiscuss
    ```
 
 2. Install dependencies:
@@ -55,70 +75,16 @@ VITE_GITHUB_TOKEN=your_github_personal_access_token
 
 4. Open your browser and navigate to `http://localhost:8080`
 
-## Project Structure
+## 💻 Development
 
-```
-├── public/              # Static assets
-├── src/
-│   ├── components/      # React components
-│   │   ├── layout/      # Layout components
-│   │   └── ui-custom/   # Custom UI components
-│   ├── lib/             # Utility functions and services
-│   ├── pages/           # Page components
-│   ├── App.tsx          # App component with routing
-│   ├── index.css        # Global styles
-│   └── main.tsx         # Entry point
-├── .env                 # Environment variables (create this)
-├── index.html           # HTML template
-└── package.json         # Project dependencies
-```
+This application was built with [Lovable](https://lovable.dev), an AI-powered web development tool that enables rapid iteration and real-time collaboration.
 
-## Build and Deployment
+## 🔐 Security
 
-### Build for Production
+- Authentication is handled securely through Supabase with GitHub OAuth
+- Row Level Security ensures private data stays private to your team
+- GitHub tokens remain client-side and are never stored on our servers
 
-```bash
-npm run build
-# or
-yarn build
-```
-
-The build output will be in the `dist` directory.
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Create a new project on Vercel
-3. Connect your GitHub repository
-4. Configure environment variables
-5. Deploy
-
-### Deploy to Netlify
-
-1. Push your code to GitHub
-2. Create a new site on Netlify
-3. Connect your GitHub repository
-4. Configure environment variables
-5. Deploy
-
-## Testing
-
-Run tests with:
-
-```bash
-npm run test
-# or
-yarn test
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
