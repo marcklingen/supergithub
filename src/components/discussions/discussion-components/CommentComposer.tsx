@@ -20,7 +20,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   discussionNumber,
   onCommentAdded
 }) => {
-  const { user, githubToken, refreshToken } = useAuth();
+  const { user, githubToken, setManualGithubToken } = useAuth();
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -129,13 +129,9 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       let errorMsg = "Your comment couldn't be posted, but it's saved as a draft";
       
       if (error.message?.includes("Resource not accessible by integration") || 
-          error.message?.includes("permission") ||
-          error.message?.includes("FORBIDDEN")) {
-        errorMsg = "The GitHub token doesn't have the write:discussion permission. Please re-authenticate with the proper scopes.";
+          error.message?.includes("permission")) {
+        errorMsg = "The GitHub token doesn't have permission to post comments. Please re-authenticate with the proper scopes.";
         setShowTokenHelp(true);
-        
-        // Log more details about the error for debugging
-        console.log("Error details:", JSON.stringify(error, null, 2));
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -153,8 +149,9 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   };
 
   const handleReauth = () => {
-    // Use the refreshToken function to properly re-authenticate
-    refreshToken();
+    // Redirect to auth page to get a new token with proper scopes
+    localStorage.removeItem('manual_github_token');
+    window.location.href = '/auth';
   };
   
   return (
@@ -184,21 +181,17 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                 {showTokenHelp && (
                   <div className="mt-2">
                     <p>
-                      This error occurs when your GitHub token doesn't have the necessary permissions.
-                      You need the <code className="bg-muted px-1 py-0.5 rounded text-xs">write:discussion</code> scope.
+                      This is likely because your GitHub token doesn't have the necessary permissions.
+                      You need to re-authenticate with the proper scopes.
                     </p>
-                    <div className="mt-2 flex flex-col gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleReauth}
-                      >
-                        Re-authenticate with GitHub
-                      </Button>
-                      <div className="text-xs text-muted-foreground">
-                        This will sign you out and redirect you to the auth page to get a new token with proper permissions.
-                      </div>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2" 
+                      onClick={handleReauth}
+                    >
+                      Re-authenticate with GitHub
+                    </Button>
                   </div>
                 )}
               </AlertDescription>

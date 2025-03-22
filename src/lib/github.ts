@@ -1,6 +1,5 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
-// GitHub GraphQL API endpoint
 const GITHUB_API_URL = 'https://api.github.com/graphql';
 
 async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
@@ -15,9 +14,6 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   console.log('Variables:', variables);
   
   try {
-    // Log the first few characters of token for debugging (be careful with sensitive data)
-    console.log(`Token prefix: ${token.substring(0, 4)}...${token.substring(token.length - 4)}`);
-
     const response = await fetch(GITHUB_API_URL, {
       method: 'POST',
       headers: {
@@ -37,9 +33,6 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
     
     if (responseData.errors) {
       console.error('GitHub GraphQL errors:', responseData.errors);
-      // Log detailed error information for debugging
-      const errorDetails = JSON.stringify(responseData.errors, null, 2);
-      console.log("Detailed error information:", errorDetails);
       throw new Error(responseData.errors.map((e: any) => e.message).join('\n'));
     }
     

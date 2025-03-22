@@ -83,15 +83,12 @@ const Auth = () => {
       setLoading(true);
       console.log('Initiating GitHub sign-in');
       
-      // Clear any stored token to ensure we get a fresh one
-      localStorage.removeItem('manual_github_token');
-      
-      // Explicitly specify the expanded scope including write:discussion
+      // Updated scopes to include write:discussion permission
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/auth`, // Explicitly redirect to the /auth route
-          scopes: 'repo read:user user:email write:discussion', // Make sure write:discussion is included
+          scopes: 'repo read:user user:email write:discussion', // Added write:discussion scope
         }
       });
 
