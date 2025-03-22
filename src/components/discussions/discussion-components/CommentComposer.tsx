@@ -22,6 +22,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   const { user, githubToken } = useAuth();
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const addComment = useAddDiscussionComment();
@@ -64,6 +65,18 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     if (!comment.trim() || !githubToken || !discussionId) return;
     
     setIsSubmitting(true);
+    setErrorMessage(null);
+    
+    // Extract user information safely
+    const userDisplayName = user?.user_metadata?.user_name || 
+                            user?.user_metadata?.full_name || 
+                            user?.email?.split('@')[0] || 
+                            'You';
+    
+    const userAvatarUrl = user?.user_metadata?.avatar_url || '';
+    const userProfileUrl = user?.user_metadata?.provider_id ? 
+                            `https://github.com/${user.user_metadata.provider_id}` : 
+                            '#';
     
     // Prepare optimistic comment
     const optimisticComment = {
@@ -71,9 +84,9 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       bodyHTML: comment.replace(/\n/g, '<br>'),
       createdAt: new Date().toISOString(),
       author: {
-        login: user?.login || 'You',
-        avatarUrl: user?.avatarUrl,
-        url: user?.url || '#'
+        login: userDisplayName,
+        avatarUrl: userAvatarUrl,
+        url: userProfileUrl
       },
       isOptimistic: true,
       upvoteCount: 0,
@@ -106,11 +119,23 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
         title: "Comment posted",
         description: "Your comment has been successfully posted"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error posting comment:', error);
+      
+      // Extract more helpful error message
+      let errorMsg = "Your comment couldn't be posted, but it's saved as a draft";
+      
+      if (error.message?.includes("Resource not accessible")) {
+        errorMsg = "The GitHub token doesn't have permission to post comments. Please check token permissions.";
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      setErrorMessage(errorMsg);
+      
       toast({
         title: "Failed to post comment",
-        description: "Your comment couldn't be posted, but it's saved as a draft",
+        description: errorMsg,
         variant: "destructive"
       });
     } finally {
@@ -122,8 +147,8 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     <div className="mt-6 border rounded-md p-4 bg-card">
       <div className="flex items-start gap-3">
         <Avatar className="h-8 w-8 mt-1">
-          <AvatarImage src={user?.avatarUrl} alt={user?.login || 'You'} />
-          <AvatarFallback>{user?.login?.[0] || 'U'}</AvatarFallback>
+          <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || 'Anonymous'} />
+          <AvatarFallback>{(user?.email?.[0] || 'A').toUpperCase()}</AvatarFallback>
         </Avatar>
         
         <div className="flex-1 space-y-3">
@@ -135,6 +160,13 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
             onChange={(e) => setComment(e.target.value)}
             disabled={isSubmitting}
           />
+          
+          {errorMessage && (
+            <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 p-3 rounded border border-red-200 dark:border-red-900">
+              <p className="font-medium">Error: {errorMessage}</p>
+              <p className="mt-1 text-xs">Your comment was saved as a draft and will be available when you return.</p>
+            </div>
+          )}
           
           <div className="flex justify-between items-center">
             <div className="text-xs text-muted-foreground">

@@ -11,6 +11,7 @@ import { DiscussionNavigationBar } from './discussion-components/DiscussionNavig
 import { DiscussionContent } from './discussion-components/DiscussionContent';
 import { CommentsList } from './discussion-components/CommentsList';
 import { CommentComposer } from './discussion-components/CommentComposer';
+import { toast } from '@/hooks/use-toast';
 
 const DiscussionDetail = () => {
   const params = useParams();
