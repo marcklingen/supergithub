@@ -1,3 +1,7 @@
+import { useQuery, useMutation } from '@tanstack/react-query';
+
+// GitHub GraphQL API endpoint
+const GITHUB_API_URL = 'https://api.github.com/graphql';
 
 async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   if (!token) {
