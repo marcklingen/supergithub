@@ -59,9 +59,8 @@ export const DiscussionNavigationBar: React.FC<DiscussionNavigationBarProps> = (
                 disabled={!prevDiscussion}
                 className="shadow-sm"
               >
-                <ArrowUp className="h-4 w-4 mr-1" />
-                <span className="sr-only md:not-sr-only md:inline-block">Previous</span>
-                <kbd className="hidden md:inline-block">k</kbd>
+                <ArrowUp className="h-4 w-4" />
+                <kbd className="ml-1 text-xs">k</kbd>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -80,9 +79,8 @@ export const DiscussionNavigationBar: React.FC<DiscussionNavigationBarProps> = (
                 disabled={!nextDiscussion}
                 className="shadow-sm"
               >
-                <ArrowDown className="h-4 w-4 mr-1" />
-                <span className="sr-only md:not-sr-only md:inline-block">Next</span>
-                <kbd className="hidden md:inline-block">j</kbd>
+                <ArrowDown className="h-4 w-4" />
+                <kbd className="ml-1 text-xs">j</kbd>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -98,9 +96,8 @@ export const DiscussionNavigationBar: React.FC<DiscussionNavigationBarProps> = (
           className="shadow-sm"
         >
           <a href={`https://github.com/${activeRepository?.owner}/${activeRepository?.name}/discussions/${discussionNumber}`} target="_blank" rel="noopener noreferrer">
-            <Github size={14} className="mr-1.5" />
-            <span className="sr-only md:not-sr-only md:inline-block">Open on GitHub</span>
-            <kbd className="hidden md:inline-block">o</kbd>
+            <Github size={14} />
+            <kbd className="ml-1 text-xs">o</kbd>
           </a>
         </Button>
       </div>
