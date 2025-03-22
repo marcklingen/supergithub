@@ -14,8 +14,8 @@ interface DiscussionContentProps {
 
 export const DiscussionContent: React.FC<DiscussionContentProps> = ({ discussion }) => {
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="mb-4">
+      <CardHeader className="pb-1 pt-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl" role="img" aria-label={discussion.category.name}>
@@ -27,8 +27,8 @@ export const DiscussionContent: React.FC<DiscussionContentProps> = ({ discussion
         </div>
       </CardHeader>
       
-      <CardContent className="pt-2">
-        <div className="flex items-center gap-2 mb-4 text-sm">
+      <CardContent className="pt-2 pb-3">
+        <div className="flex items-center gap-2 mb-3 text-sm">
           <Avatar className="h-6 w-6">
             <AvatarImage src={discussion.author.avatarUrl} alt={discussion.author.login} />
             <AvatarFallback><User size={12} /></AvatarFallback>
