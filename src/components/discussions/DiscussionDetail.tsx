@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,7 @@ const DiscussionDetail = () => {
   const discussionNumber = Number(params.discussionNumber);
   const [optimisticComments, setOptimisticComments] = useState<any[]>([]);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const commentComposerRef = useRef<HTMLDivElement>(null);
   
   const {
     data,
@@ -106,6 +107,19 @@ const DiscussionDetail = () => {
   
   const handleReplyClick = (commentId: string) => {
     setReplyingToCommentId(commentId);
+    
+    // Scroll to the comment composer after a short delay to ensure it's rendered
+    setTimeout(() => {
+      if (commentComposerRef.current) {
+        commentComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Focus the textarea inside the composer
+        const textarea = commentComposerRef.current.querySelector('textarea');
+        if (textarea) {
+          textarea.focus();
+        }
+      }
+    }, 100);
   };
   
   const handleCancelReply = () => {
@@ -127,6 +141,21 @@ const DiscussionDetail = () => {
   const replyToComment = replyingToCommentId 
     ? findCommentById(replyingToCommentId, [...discussion?.comments.nodes || [], ...optimisticComments])
     : null;
+  
+  const focusCommentComposer = () => {
+    if (!replyingToCommentId) {
+      // If not replying to a specific comment, focus the main comment composer
+      if (commentComposerRef.current) {
+        commentComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Focus the textarea inside the composer
+        const textarea = commentComposerRef.current.querySelector('textarea');
+        if (textarea) {
+          textarea.focus();
+        }
+      }
+    }
+  };
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -164,6 +193,10 @@ const DiscussionDetail = () => {
           if (activeRepository) {
             window.open(`https://github.com/${activeRepository.owner}/${activeRepository.name}/discussions/${discussionNumber}`, '_blank');
           }
+          break;
+        case 'r':
+          e.preventDefault();
+          focusCommentComposer();
           break;
         default:
           break;
@@ -215,22 +248,24 @@ const DiscussionDetail = () => {
         onReplyClick={handleReplyClick}
       />
       
-      {replyingToCommentId ? (
-        <CommentComposer 
-          discussionId={discussion.id}
-          discussionNumber={discussionNumber}
-          onCommentAdded={handleAddComment}
-          replyToId={replyingToCommentId}
-          replyToComment={replyToComment}
-          onCancelReply={handleCancelReply}
-        />
-      ) : (
-        <CommentComposer 
-          discussionId={discussion.id} 
-          discussionNumber={discussionNumber}
-          onCommentAdded={handleAddComment}
-        />
-      )}
+      <div ref={commentComposerRef}>
+        {replyingToCommentId ? (
+          <CommentComposer 
+            discussionId={discussion.id}
+            discussionNumber={discussionNumber}
+            onCommentAdded={handleAddComment}
+            replyToId={replyingToCommentId}
+            replyToComment={replyToComment}
+            onCancelReply={handleCancelReply}
+          />
+        ) : (
+          <CommentComposer 
+            discussionId={discussion.id} 
+            discussionNumber={discussionNumber}
+            onCommentAdded={handleAddComment}
+          />
+        )}
+      </div>
     </>
   );
 };

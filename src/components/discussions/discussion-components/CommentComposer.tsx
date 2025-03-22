@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, Send, AlertTriangle, X } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,9 +72,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   }, [comment]);
   
   useEffect(() => {
-    // Focus the textarea when composing a reply
-    if (replyToId && textareaRef.current) {
-      textareaRef.current.focus();
+    if (textareaRef.current) {
+      if (replyToId) {
+        textareaRef.current.focus();
+      }
     }
   }, [replyToId]);
   
@@ -96,7 +96,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                             `https://github.com/${user.user_metadata.provider_id}` : 
                             '#';
     
-    // Generate a unique ID for this optimistic comment
     const optimisticId = `optimistic-${Date.now()}`;
     
     const optimisticComment = {
@@ -139,7 +138,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       
       const realComment = result?.addDiscussionComment?.comment;
       if (realComment) {
-        // Add the real comment
         onCommentAdded(realComment);
         
         toast({
