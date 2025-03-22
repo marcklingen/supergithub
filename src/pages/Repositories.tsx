@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -580,5 +581,24 @@ const Repositories = () => {
                 )}
               </CardContent>
               
-              {
+              {githubToken && githubRepos?._orgAccessError && (
+                <CardFooter className="flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReauthWithOrgAccess}
+                    className="gap-2"
+                  >
+                    <Github size={16} />
+                    Grant access to more repositories
+                  </Button>
+                </CardFooter>
+              )}
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
+export default Repositories;
