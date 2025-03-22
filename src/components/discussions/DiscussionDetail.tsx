@@ -1,16 +1,18 @@
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDiscussionDetails, useRepositoryDiscussions, Discussion, DiscussionDetailsResponse } from '@/lib/github';
+import { useDiscussionDetails, useRepositoryDiscussions, Discussion } from '@/lib/github';
 import { DiscussionSkeleton } from './discussion-components/DiscussionSkeleton';
 import { DiscussionError } from './discussion-components/DiscussionError';
 import { DiscussionNotFound } from './discussion-components/DiscussionNotFound';
 import { DiscussionNavigationBar } from './discussion-components/DiscussionNavigationBar';
 import { DiscussionContent } from './discussion-components/DiscussionContent';
-import { CommentsList } from './discussion-components/CommentsList';
-import { CommentComposer } from './discussion-components/CommentComposer';
+import { DiscussionResponse } from './discussion-components/DiscussionResponse';
+import { useDiscussionNavigation } from '@/hooks/useDiscussionNavigation';
+import { useDiscussionPrefetch } from '@/hooks/useDiscussionPrefetch';
+import { useDiscussionComments } from '@/hooks/useDiscussionComments';
 
 interface DiscussionDetailProps {
   prefetchedDiscussions?: Discussion[];
@@ -20,12 +22,8 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
   const params = useParams();
   const { githubToken } = useAuth();
   const { activeRepository, activeCategory } = useRepo();
-  const navigate = useNavigate();
   
   const discussionNumber = Number(params.discussionNumber);
-  const [optimisticComments, setOptimisticComments] = useState<any[]>([]);
-  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
-  const commentComposerRef = useRef<HTMLDivElement>(null);
   
   const {
     data,
@@ -70,242 +68,51 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
   const prevDiscussion = currentIndex > 0 ? discussions[currentIndex - 1] : null;
   const nextDiscussion = currentIndex < discussions.length - 1 ? discussions[currentIndex + 1] : null;
   
-  // Prefetch discussion details for adjacent discussions
-  useEffect(() => {
-    if (githubToken && activeRepository) {
-      // Prefetch the next discussion details
-      if (nextDiscussion) {
-        const prefetchNext = async () => {
-          try {
-            const queryClient = window.queryClient; // Assuming queryClient is globally accessible
-            if (queryClient) {
-              await queryClient.prefetchQuery({
-                queryKey: ['discussionDetails', activeRepository.owner, activeRepository.name, nextDiscussion.number, githubToken],
-                queryFn: () => fetch(`https://api.github.com/graphql`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${githubToken}`,
-                  },
-                  body: JSON.stringify({
-                    query: `
-                      query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
-                        repository(owner: $owner, name: $name) {
-                          discussion(number: $number) {
-                            id
-                          }
-                        }
-                      }
-                    `,
-                    variables: { 
-                      owner: activeRepository.owner, 
-                      name: activeRepository.name, 
-                      number: nextDiscussion.number 
-                    }
-                  }),
-                }).then(r => r.json()),
-              });
-            }
-          } catch (e) {
-            console.log('Prefetch error:', e);
-          }
-        };
-        
-        // Prefetch the previous discussion details
-        if (prevDiscussion) {
-          const prefetchPrev = async () => {
-            try {
-              const queryClient = window.queryClient;
-              if (queryClient) {
-                await queryClient.prefetchQuery({
-                  queryKey: ['discussionDetails', activeRepository.owner, activeRepository.name, prevDiscussion.number, githubToken],
-                  queryFn: () => fetch(`https://api.github.com/graphql`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${githubToken}`,
-                    },
-                    body: JSON.stringify({
-                      query: `
-                        query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
-                          repository(owner: $owner, name: $name) {
-                            discussion(number: $number) {
-                              id
-                            }
-                          }
-                        }
-                      `,
-                      variables: { 
-                        owner: activeRepository.owner, 
-                        name: activeRepository.name, 
-                        number: prevDiscussion.number 
-                      }
-                    }),
-                  }).then(r => r.json()),
-                });
-              }
-            } catch (e) {
-              console.log('Prefetch error:', e);
-            }
-          };
-          
-          prefetchPrev();
-        }
-        
-        prefetchNext();
-      }
-    }
-  }, [discussionNumber, activeRepository, githubToken, nextDiscussion, prevDiscussion]);
-  
-  const navigateTo = (discussion: any) => {
-    if (discussion) {
-      navigate(`/discussions/${discussion.number}`);
-    }
-  };
-  
   const discussion = data?.repository?.discussion;
   
+  // Use custom hooks
+  const {
+    optimisticComments,
+    replyingToCommentId,
+    handleAddComment,
+    handleReplyClick,
+    handleCancelReply,
+    getAllComments,
+    getReplyToComment
+  } = useDiscussionComments({
+    discussionNumber,
+    discussion
+  });
+  
+  const { navigateTo, handleBackClick } = useDiscussionNavigation({
+    prevDiscussion,
+    nextDiscussion,
+    discussionNumber,
+    replyingToCommentId,
+    onCancelReply: handleCancelReply,
+    activeRepository
+  });
+  
+  useDiscussionPrefetch({
+    githubToken,
+    activeRepository,
+    prevDiscussion,
+    nextDiscussion
+  });
+  
+  // Add a refetch after a successful comment post
   useEffect(() => {
-    setOptimisticComments([]);
-    setReplyingToCommentId(null);
-  }, [discussionNumber]);
-  
-  useEffect(() => {
-    if (discussion) {
-      setOptimisticComments([]);
-    }
-  }, [data]);
-  
-  const handleBackClick = () => {
-    navigate('/discussions');
-  };
-  
-  const handleAddComment = async (newComment: any) => {
-    console.log("Adding comment to discussion:", newComment);
+    if (!optimisticComments.length) return;
     
-    if (newComment.isOptimistic) {
-      setOptimisticComments(prev => {
-        const filtered = prev.filter(c => c.id !== newComment.id);
-        newComment.replies = { nodes: [] };
-        return [...filtered, newComment];
-      });
-    } else {
-      const optimisticId = optimisticComments.find(c => 
-        c.bodyHTML.replace(/<br>/g, '\n') === newComment.bodyHTML
-      )?.id;
-      
-      if (optimisticId) {
-        setOptimisticComments(prev => 
-          prev.filter(c => c.id !== optimisticId)
-        );
-      } else {
-        setOptimisticComments([]);
-      }
-      
-      setTimeout(() => {
-        refetch();
-      }, 1000);
-    }
-  };
-  
-  const handleReplyClick = (commentId: string) => {
-    setReplyingToCommentId(commentId);
+    // If we have optimistic comments but they're not real yet
+    if (optimisticComments.some(c => c.isOptimistic)) return;
     
-    setTimeout(() => {
-      if (commentComposerRef.current) {
-        commentComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        const textarea = commentComposerRef.current.querySelector('textarea');
-        if (textarea) {
-          textarea.focus();
-        }
-      }
-    }, 100);
-  };
-  
-  const handleCancelReply = () => {
-    setReplyingToCommentId(null);
-  };
-  
-  const findCommentById = (commentId: string, comments: any[]): any => {
-    for (const comment of comments) {
-      if (comment.id === commentId) return comment;
-      if (comment.replies && comment.replies.nodes) {
-        const found = findCommentById(commentId, comment.replies.nodes);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  
-  const replyToComment = replyingToCommentId 
-    ? findCommentById(replyingToCommentId, [...discussion?.comments.nodes || [], ...optimisticComments])
-    : null;
-  
-  const focusCommentComposer = () => {
-    if (!replyingToCommentId) {
-      if (commentComposerRef.current) {
-        commentComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        const textarea = commentComposerRef.current.querySelector('textarea');
-        if (textarea) {
-          textarea.focus();
-        }
-      }
-    }
-  };
-  
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        e.target instanceof HTMLSelectElement ||
-        e.metaKey ||
-        e.ctrlKey
-      ) {
-        return;
-      }
-      
-      switch (e.key) {
-        case 'k':
-          e.preventDefault();
-          if (prevDiscussion) {
-            navigateTo(prevDiscussion);
-          }
-          break;
-        case 'j':
-          e.preventDefault();
-          if (nextDiscussion) {
-            navigateTo(nextDiscussion);
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          if (replyingToCommentId) {
-            setReplyingToCommentId(null);
-          } else {
-            handleBackClick();
-          }
-          break;
-        case 'o':
-          e.preventDefault();
-          if (activeRepository) {
-            window.open(`https://github.com/${activeRepository.owner}/${activeRepository.name}/discussions/${discussionNumber}`, '_blank');
-          }
-          break;
-        case 'r':
-          e.preventDefault();
-          focusCommentComposer();
-          break;
-        default:
-          break;
-      }
-    };
+    const timer = setTimeout(() => {
+      refetch();
+    }, 1000);
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [prevDiscussion, nextDiscussion, activeRepository, discussionNumber, replyingToCommentId]);
+    return () => clearTimeout(timer);
+  }, [optimisticComments, refetch]);
   
   if (isLoading) {
     return <DiscussionSkeleton onBackClick={handleBackClick} />;
@@ -319,16 +126,8 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
     return <DiscussionNotFound onBackClick={handleBackClick} />;
   }
   
-  const allComments = {
-    ...discussion.comments,
-    nodes: [
-      ...discussion.comments.nodes,
-      ...optimisticComments.map(comment => ({
-        ...comment,
-        replies: comment.replies || { nodes: [] }
-      }))
-    ]
-  };
+  const allComments = getAllComments();
+  const replyToComment = getReplyToComment();
   
   return (
     <>
@@ -343,29 +142,16 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
       
       <DiscussionContent discussion={discussion} />
       
-      <CommentsList 
-        comments={allComments} 
+      <DiscussionResponse
+        discussion={discussion}
+        allComments={allComments}
+        replyingToCommentId={replyingToCommentId}
+        replyToComment={replyToComment}
+        discussionNumber={discussionNumber}
         onReplyClick={handleReplyClick}
+        onCancelReply={handleCancelReply}
+        onCommentAdded={handleAddComment}
       />
-      
-      <div ref={commentComposerRef}>
-        {replyingToCommentId ? (
-          <CommentComposer 
-            discussionId={discussion.id}
-            discussionNumber={discussionNumber}
-            onCommentAdded={handleAddComment}
-            replyToId={replyingToCommentId}
-            replyToComment={replyToComment}
-            onCancelReply={handleCancelReply}
-          />
-        ) : (
-          <CommentComposer 
-            discussionId={discussion.id} 
-            discussionNumber={discussionNumber}
-            onCommentAdded={handleAddComment}
-          />
-        )}
-      </div>
     </>
   );
 };
