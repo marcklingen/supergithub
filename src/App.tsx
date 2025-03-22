@@ -1,48 +1,53 @@
 
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { RepoProvider } from "@/contexts/RepoContext";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import Repositories from "./pages/Repositories";
-import Discussions from "./pages/Discussions";
-import AccountSettings from "./pages/AccountSettings";
-import Layout from "./pages/Layout";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { RepoProvider } from './contexts/RepoContext';
 
-const queryClient = new QueryClient();
+import Layout from './pages/Layout';
+import Auth from './pages/Auth';
+import Repositories from './pages/Repositories';
+import Discussions from './pages/Discussions';
+import AccountSettings from './pages/AccountSettings';
+import NotFound from './pages/NotFound';
+import GitHubToken from './pages/GitHubToken';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <RepoProvider>
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RepoProvider>
+          <Router>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={<Navigate to="/repositories" replace />} />
               
-              {/* Routes with sidebar layout */}
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Navigate to="/repositories" replace />} />
+              <Route element={<Layout />}>
                 <Route path="/repositories" element={<Repositories />} />
                 <Route path="/discussions" element={<Discussions />} />
                 <Route path="/discussions/:discussionNumber" element={<Discussions />} />
-                <Route path="/account-settings" element={<AccountSettings />} />
+                <Route path="/account" element={<AccountSettings />} />
+                <Route path="/github-token" element={<GitHubToken />} />
               </Route>
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </RepoProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+          </Router>
+          <Toaster />
+        </RepoProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
