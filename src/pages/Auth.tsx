@@ -1,22 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2, AlertTriangle, KeyRound } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/contexts/AuthContext';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { GithubIcon, Loader2, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -33,80 +46,91 @@ const Auth = () => {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
   const searchParams = new URLSearchParams(location.search);
-  const reauth = searchParams.get('reauth') === 'true';
-  const includeOrgScope = searchParams.get('scope') === 'read:org';
+  const reauth = searchParams.get("reauth") === "true";
+  const includeOrgScope = searchParams.get("scope") === "read:org";
 
   useEffect(() => {
-    const isDevelopment = import.meta.env.MODE === 'development' || 
-                         window.location.hostname === 'localhost' || 
-                         window.location.hostname.includes('preview');
+    const isDevelopment =
+      import.meta.env.MODE === "development" ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname.includes("preview");
     setIsDevMode(isDevelopment);
-    console.log('Development mode:', isDevelopment);
+    console.log("Development mode:", isDevelopment);
   }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    const error = url.searchParams.get('error');
-    const errorDescription = url.searchParams.get('error_description');
-    
+    const error = url.searchParams.get("error");
+    const errorDescription = url.searchParams.get("error_description");
+
     if (error) {
-      setLoginError(errorDescription?.replace(/\+/g, ' ') || "There was an error during authentication");
-      
+      setLoginError(
+        errorDescription?.replace(/\+/g, " ") ||
+          "There was an error during authentication"
+      );
+
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [toast]);
 
   useEffect(() => {
     if (user && !authLoading && !reauth) {
-      console.log('User already logged in, redirecting to repositories');
-      navigate('/repositories');
+      console.log("User already logged in, redirecting to repositories");
+      navigate("/repositories");
     }
   }, [user, authLoading, navigate, reauth]);
 
   async function handleGitHubSignIn() {
     try {
       setLoginError(null);
-      
+
       if (loading) {
-        console.log('Already processing a sign-in request, ignoring');
+        console.log("Already processing a sign-in request, ignoring");
         return;
       }
-      
+
       setLoading(true);
-      console.log('Initiating GitHub sign-in');
-      
-      let scopes = 'repo read:user user:email write:discussion write:issue';
-      
+      console.log("Initiating GitHub sign-in");
+
+      let scopes = "repo read:user user:email write:discussion write:issue";
+
       if (includeOrgScope) {
-        scopes += ' read:org';
-        console.log('Including read:org scope for organization access');
+        scopes += " read:org";
+        console.log("Including read:org scope for organization access");
       }
-      
+
+      const redirectUrl = window.location.origin + "/auth";
+      console.log("Setting redirect URL to:", redirectUrl);
+
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
+        provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/auth`, 
+          redirectTo: redirectUrl,
           scopes: scopes,
-        }
+        },
       });
 
       if (error) {
-        console.error('GitHub sign-in error:', error);
+        console.error("GitHub sign-in error:", error);
         setLoginError(error.message || "Error signing in with GitHub");
         setLoading(false);
         return;
       }
 
-      console.log('GitHub sign-in initiated successfully');
-    } catch (error: any) {
-      console.error('Error in handleGitHubSignIn:', error);
-      setLoginError(error.message || "An error occurred during GitHub sign in");
+      console.log("GitHub sign-in initiated successfully");
+    } catch (error: unknown) {
+      console.error("Error in handleGitHubSignIn:", error);
+      setLoginError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during GitHub sign in"
+      );
       setLoading(false);
     }
   }
@@ -115,17 +139,21 @@ const Auth = () => {
     try {
       setLoginError(null);
       setLoading(true);
-      
+
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (error) throw error;
-      
-      navigate('/repositories');
-    } catch (error: any) {
-      setLoginError(error.message || "An error occurred during sign in");
+
+      navigate("/repositories");
+    } catch (error: unknown) {
+      setLoginError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during sign in"
+      );
     } finally {
       setLoading(false);
     }
@@ -135,23 +163,27 @@ const Auth = () => {
     try {
       setLoginError(null);
       setLoading(true);
-      
+
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: window.location.origin + '/auth',
-        }
+          emailRedirectTo: window.location.origin + "/auth",
+        },
       });
 
       if (error) throw error;
-      
+
       toast({
         title: "Registration successful",
         description: "Please check your email to confirm your account",
       });
-    } catch (error: any) {
-      setLoginError(error.message || "An error occurred during sign up");
+    } catch (error: unknown) {
+      setLoginError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during sign up"
+      );
     } finally {
       setLoading(false);
     }
@@ -165,15 +197,16 @@ const Auth = () => {
             {reauth ? "Update GitHub Permissions" : "Welcome to SuperGitHub"}
           </CardTitle>
           <CardDescription>
-            {reauth ? 
-              (includeOrgScope ? 
-                "Additional organization access permissions are needed" : 
-                "Please reconnect your GitHub account") : 
-              `Sign in with your ${isDevMode ? "GitHub account or credentials" : "GitHub account"} to access discussions with superpowers`
-            }
+            {reauth
+              ? includeOrgScope
+                ? "Additional organization access permissions are needed"
+                : "Please reconnect your GitHub account"
+              : `Sign in with your ${
+                  isDevMode ? "GitHub account or credentials" : "GitHub account"
+                } to access discussions with superpowers`}
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {loginError && (
             <Alert variant="destructive" className="mb-4">
@@ -182,20 +215,26 @@ const Auth = () => {
               <AlertDescription>{loginError}</AlertDescription>
             </Alert>
           )}
-          
+
           {includeOrgScope && (
             <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800 dark:text-amber-400">Organization Access Required</AlertTitle>
+              <AlertTitle className="text-amber-800 dark:text-amber-400">
+                Organization Access Required
+              </AlertTitle>
               <AlertDescription className="text-amber-700 dark:text-amber-500">
-                <p>Your current token doesn't have organization access permissions. Click below to reconnect with GitHub and grant additional access.</p>
+                <p>
+                  Your current token doesn't have organization access
+                  permissions. Click below to reconnect with GitHub and grant
+                  additional access.
+                </p>
               </AlertDescription>
             </Alert>
           )}
-          
-          <Button 
-            variant="outline" 
-            className="w-full justify-center gap-2" 
+
+          <Button
+            variant="outline"
+            className="w-full justify-center gap-2"
             onClick={handleGitHubSignIn}
             disabled={loading || authLoading}
           >
@@ -205,8 +244,11 @@ const Auth = () => {
               <GithubIcon size={16} className="mr-2" />
             )}
             <span>
-              {loading ? 'Signing in...' : 
-               (reauth ? 'Reconnect with GitHub' : 'Sign in with GitHub')}
+              {loading
+                ? "Signing in..."
+                : reauth
+                ? "Reconnect with GitHub"
+                : "Sign in with GitHub"}
             </span>
           </Button>
 
@@ -224,7 +266,10 @@ const Auth = () => {
               </div>
 
               <Form {...form}>
-                <form className="space-y-4" onSubmit={form.handleSubmit(handleEmailSignIn)}>
+                <form
+                  className="space-y-4"
+                  onSubmit={form.handleSubmit(handleEmailSignIn)}
+                >
                   <FormField
                     control={form.control}
                     name="email"
@@ -238,7 +283,7 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="password"
@@ -246,7 +291,11 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -254,11 +303,7 @@ const Auth = () => {
                   />
 
                   <div className="flex gap-2 pt-2">
-                    <Button 
-                      type="submit" 
-                      disabled={loading}
-                      className="flex-1"
-                    >
+                    <Button type="submit" disabled={loading} className="flex-1">
                       {loading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -268,7 +313,7 @@ const Auth = () => {
                         <span>Sign In</span>
                       )}
                     </Button>
-                    
+
                     <Button
                       type="button"
                       variant="outline"
@@ -284,11 +329,11 @@ const Auth = () => {
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex justify-center text-xs text-muted-foreground">
-          {isDevMode ? 
-            "Development environment: Email/password is available" : 
-            "Requires GitHub account with repositories that have discussions enabled"}
+          {isDevMode
+            ? "Development environment: Email/password is available"
+            : "Requires GitHub account with repositories that have discussions enabled"}
         </CardFooter>
       </Card>
     </div>
