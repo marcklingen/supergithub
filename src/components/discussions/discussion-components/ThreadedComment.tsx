@@ -2,7 +2,7 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { User, ArrowUp, Loader2, MessageCircle, Reply } from 'lucide-react';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,88 +29,95 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
         key={comment.id} 
         className={`border ${comment.isOptimistic ? 'bg-muted/10 border-dashed' : ''}`}
       >
-        <CardHeader className="p-3 pb-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
+        <CardContent className="p-2">
+          {/* Comment header with all elements in a single row */}
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-1.5 flex-grow min-w-0">
+              <Avatar className="h-5 w-5">
                 <AvatarImage src={comment.author.avatarUrl} alt={comment.author.login} />
-                <AvatarFallback><User size={12} /></AvatarFallback>
+                <AvatarFallback><User size={10} /></AvatarFallback>
               </Avatar>
-              <div>
+              
+              <div className="flex items-center gap-1 overflow-hidden text-xs">
                 <a 
                   href={comment.author.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="font-medium text-sm hover:underline"
+                  className="font-medium hover:underline whitespace-nowrap text-ellipsis overflow-hidden"
                 >
                   {comment.author.login}
                 </a>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span>{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}</span>
-                  {comment.isOptimistic && (
-                    <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Loader2 size={10} className="animate-spin" />
-                        Posting...
-                      </span>
-                    </>
-                  )}
-                  {comment.replyTo && (
-                    <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle size={10} />
-                        Reply
-                      </span>
-                    </>
-                  )}
-                </div>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground whitespace-nowrap">
+                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                </span>
+                
+                {comment.isOptimistic && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="flex items-center gap-0.5 text-muted-foreground">
+                      <Loader2 size={10} className="animate-spin" />
+                      <span className="whitespace-nowrap">Posting...</span>
+                    </span>
+                  </>
+                )}
+                
+                {comment.replyTo && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="flex items-center gap-0.5 text-muted-foreground">
+                      <MessageCircle size={10} />
+                      <span className="whitespace-nowrap">Reply</span>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             
-            {comment.upvoteCount > 0 && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <ArrowUp size={12} />
-                <span>{comment.upvoteCount}</span>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-1">
-          <div 
-            className="prose prose-sm max-w-none dark:prose-invert text-sm"
-            dangerouslySetInnerHTML={{ __html: comment.bodyHTML }}
-          />
-        </CardContent>
-        <CardFooter className="p-2 flex flex-wrap items-center justify-between">
-          <div className="flex flex-wrap gap-1">
-            {comment.reactions && comment.reactions.nodes.length > 0 && (
-              comment.reactions.nodes.map((reaction: any, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs py-0 px-1.5 h-5">
-                  {reaction.content}
-                </Badge>
-              ))
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {comment.upvoteCount > 0 && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <ArrowUp size={10} />
+                  <span>{comment.upvoteCount}</span>
+                </div>
+              )}
+              
+              {depth < 1 && onReplyClick && (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-5 px-1.5 text-xs gap-1" 
+                  onClick={() => onReplyClick(comment.id)}
+                >
+                  <Reply size={10} />
+                  <span className="hidden sm:inline">Reply</span>
+                </Button>
+              )}
+            </div>
           </div>
           
-          {depth < 1 && onReplyClick && (
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="ml-auto gap-1 text-xs h-6 px-2" 
-              onClick={() => onReplyClick(comment.id)}
-            >
-              <Reply size={12} />
-              Reply
-            </Button>
+          {/* Comment content */}
+          <div 
+            className="prose prose-sm max-w-none dark:prose-invert text-xs pl-6.5 ml-0.5"
+            dangerouslySetInnerHTML={{ __html: comment.bodyHTML }}
+          />
+          
+          {/* Reactions (if any) */}
+          {comment.reactions && comment.reactions.nodes.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1 pl-6.5 ml-0.5">
+              {comment.reactions.nodes.map((reaction: any, index: number) => (
+                <Badge key={index} variant="secondary" className="text-xs py-0 px-1 h-4">
+                  {reaction.content}
+                </Badge>
+              ))}
+            </div>
           )}
-        </CardFooter>
+        </CardContent>
       </Card>
       
       {/* Render replies if they exist and we haven't reached max depth */}
       {hasReplies && depth < maxDepth && (
-        <div className="ml-4 mt-1 pl-2 border-l-2 border-muted">
+        <div className="ml-3 mt-1 pl-2 border-l border-muted">
           {comment.replies.nodes.map((reply: any) => (
             <div key={reply.id} className="mt-1">
               <ThreadedComment 
