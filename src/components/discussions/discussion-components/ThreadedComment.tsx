@@ -17,6 +17,7 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
   depth = 0,
   maxDepth = 3 
 }) => {
+  // Check if this comment has replies
   const hasReplies = comment.replies && comment.replies.nodes && comment.replies.nodes.length > 0;
   
   return (

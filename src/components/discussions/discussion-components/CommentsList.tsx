@@ -16,7 +16,7 @@ interface CommentsListProps {
 }
 
 export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
-  // Filter out replies so we only show top-level comments
+  // Only show top-level comments (comments that don't have a replyTo field)
   const topLevelComments = comments.nodes.filter(comment => !comment.replyTo);
   const totalCommentsCount = comments.totalCount + comments.nodes.filter((c: any) => c.isOptimistic).length;
 

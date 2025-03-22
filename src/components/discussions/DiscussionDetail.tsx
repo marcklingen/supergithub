@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -60,15 +59,12 @@ const DiscussionDetail = () => {
   
   const discussion = data?.repository?.discussion;
   
-  // Reset optimistic comments when discussion changes
   useEffect(() => {
     setOptimisticComments([]);
   }, [discussionNumber]);
   
-  // Clean up optimistic comments when the discussion data is refetched
   useEffect(() => {
     if (discussion) {
-      // When data is refreshed, clear any optimistic comments that are no longer needed
       setOptimisticComments([]);
     }
   }, [data]);
@@ -80,16 +76,13 @@ const DiscussionDetail = () => {
   const handleAddComment = async (newComment: any) => {
     console.log("Adding comment to discussion:", newComment);
     
-    // If this is an optimistic comment, add it to our local state
     if (newComment.isOptimistic) {
       setOptimisticComments(prev => {
-        // Replace existing optimistic comment (if we have one with same id)
         const filtered = prev.filter(c => c.id !== newComment.id);
+        newComment.replies = { nodes: [] };
         return [...filtered, newComment];
       });
     } else {
-      // If it's a real comment from the API, remove any optimistic versions
-      // Also identify if the new comment matches an optimistic one by comparing body content
       const optimisticId = optimisticComments.find(c => 
         c.bodyHTML.replace(/<br>/g, '\n') === newComment.bodyHTML
       )?.id;
@@ -99,22 +92,17 @@ const DiscussionDetail = () => {
           prev.filter(c => c.id !== optimisticId)
         );
       } else {
-        // If no matching optimistic comment found, clear all optimistic comments
-        // as a fallback to prevent duplicates
         setOptimisticComments([]);
       }
       
-      // Refetch the discussion to get the latest comments
       setTimeout(() => {
         refetch();
       }, 1000);
     }
   };
   
-  // Add useEffect to handle the Escape key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if user is typing in an input or textarea
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -167,12 +155,14 @@ const DiscussionDetail = () => {
     return <DiscussionNotFound onBackClick={handleBackClick} />;
   }
   
-  // Merge API comments with optimistic comments
   const allComments = {
     ...discussion.comments,
     nodes: [
       ...discussion.comments.nodes,
-      ...optimisticComments
+      ...optimisticComments.map(comment => ({
+        ...comment,
+        replies: comment.replies || { nodes: [] }
+      }))
     ]
   };
   

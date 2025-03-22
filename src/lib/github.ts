@@ -342,6 +342,29 @@ export function useDiscussionDetails(
                       replyTo {
                         id
                       }
+                      replies(first: 10) {
+                        totalCount
+                        nodes {
+                          id
+                          author {
+                            login
+                            avatarUrl
+                            url
+                          }
+                          bodyHTML
+                          createdAt
+                          upvoteCount
+                          isAnswer
+                          replyTo {
+                            id
+                          }
+                        }
+                      }
+                      reactions(first: 10) {
+                        nodes {
+                          content
+                        }
+                      }
                     }
                   }
                   reactions(first: 10) {
