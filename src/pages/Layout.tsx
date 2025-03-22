@@ -1,8 +1,15 @@
 
 import React, { useEffect } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import RepoSidebar from '@/components/layout/RepoSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  SidebarProvider, 
+  Sidebar, 
+  SidebarContent, 
+  SidebarFooter,
+  SidebarHeader
+} from "@/components/ui/sidebar";
+import RepoSidebar from '@/components/layout/RepoSidebar';
 
 const Layout = () => {
   const { user, loading } = useAuth();
@@ -31,12 +38,18 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen flex w-full">
-      <RepoSidebar />
-      <div className="flex-1 overflow-auto pt-0">
-        <Outlet />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full overflow-hidden">
+        <Sidebar>
+          <SidebarHeader>
+            <RepoSidebar />
+          </SidebarHeader>
+        </Sidebar>
+        <div className="flex-1 overflow-auto">
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 

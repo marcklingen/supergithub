@@ -14,7 +14,7 @@ const RepoSidebar = () => {
   
   if (!user) {
     return (
-      <div className="w-64 h-screen border-r bg-sidebar">
+      <div className="w-full h-full">
         <div className="p-4 border-b flex items-center justify-between">
           <h3 className="text-lg font-semibold">SuperGitHub</h3>
           <ThemeSwitcher />
@@ -33,7 +33,7 @@ const RepoSidebar = () => {
   }
   
   return (
-    <div className="w-64 h-screen border-r bg-sidebar text-sidebar-foreground flex flex-col">
+    <div className="w-full h-full flex flex-col">
       <div className="p-4 border-b flex items-center justify-between">
         <Link to="/" className="text-lg font-semibold hover:text-primary transition-colors">
           SuperGitHub
@@ -44,7 +44,6 @@ const RepoSidebar = () => {
       <div className="flex-1 overflow-auto">
         <RepositoryDropdown />
         <DiscussionCategories />
-        {/* NavigationLinks component removed from here */}
       </div>
       
       <UserProfile />
