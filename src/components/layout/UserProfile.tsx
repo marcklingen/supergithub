@@ -29,8 +29,25 @@ const UserProfile: React.FC = () => {
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.user_name || user?.email || 'User';
   
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      await signOut();
+      console.log("Navigating to /auth after sign out");
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account"
+      });
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      toast({
+        title: "Sign out failed",
+        description: "There was an error signing out. Please try again.",
+        variant: "destructive"
+      });
+      // Force navigation to auth page even if sign out fails
+      navigate('/auth', { replace: true });
+    }
   };
 
   const handleCopyToken = () => {

@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
   session: Session | null;
@@ -78,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_, session) => {
+      (event, session) => {
+        console.log("Auth state changed, event:", event);
         setSession(session);
         setUser(session?.user ?? null);
         const token = extractGitHubToken(session);
@@ -102,10 +103,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    // Clear manual token when signing out
-    localStorage.removeItem('manual_github_token');
-    setGithubToken(null);
+    console.log("Signing out...");
+    
+    try {
+      // Clear all local state first
+      setSession(null);
+      setUser(null);
+      
+      // Clear GitHub token from localStorage
+      localStorage.removeItem('manual_github_token');
+      setGithubToken(null);
+      
+      // Clear active repository from local storage
+      localStorage.removeItem('activeRepo');
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error signing out:", error);
+        throw error;
+      }
+      
+      console.log("Successfully signed out");
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // Even if there's an error, we want to clear local state
+      setSession(null);
+      setUser(null);
+      setGithubToken(null);
+    }
   };
 
   return (

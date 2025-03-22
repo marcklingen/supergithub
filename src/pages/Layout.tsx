@@ -1,16 +1,19 @@
 
 import React, { useEffect } from 'react';
-import { Outlet, Navigate, useNavigate } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import RepoSidebar from '@/components/layout/RepoSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Layout = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    console.log("Layout effect - Auth state:", { user: !!user, loading });
     if (!loading && !user) {
-      navigate('/auth');
+      console.log("No user detected, redirecting to /auth");
+      navigate('/auth', { replace: true });
     }
   }, [user, loading, navigate]);
 
@@ -23,6 +26,7 @@ const Layout = () => {
 
   // If not authenticated and not loading, redirect to auth
   if (!user && !loading) {
+    console.log("Rendering Navigate to /auth");
     return <Navigate to="/auth" replace />;
   }
 
