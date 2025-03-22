@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -19,6 +20,7 @@ const DiscussionDetail = () => {
   
   const discussionNumber = Number(params.discussionNumber);
   const [optimisticComments, setOptimisticComments] = useState<any[]>([]);
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   
   const {
     data,
@@ -61,6 +63,7 @@ const DiscussionDetail = () => {
   
   useEffect(() => {
     setOptimisticComments([]);
+    setReplyingToCommentId(null);
   }, [discussionNumber]);
   
   useEffect(() => {
@@ -101,6 +104,30 @@ const DiscussionDetail = () => {
     }
   };
   
+  const handleReplyClick = (commentId: string) => {
+    setReplyingToCommentId(commentId);
+  };
+  
+  const handleCancelReply = () => {
+    setReplyingToCommentId(null);
+  };
+  
+  // Get the comment being replied to (if any)
+  const findCommentById = (commentId: string, comments: any[]): any => {
+    for (const comment of comments) {
+      if (comment.id === commentId) return comment;
+      if (comment.replies && comment.replies.nodes) {
+        const found = findCommentById(commentId, comment.replies.nodes);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  
+  const replyToComment = replyingToCommentId 
+    ? findCommentById(replyingToCommentId, [...discussion?.comments.nodes || [], ...optimisticComments])
+    : null;
+  
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -126,7 +153,11 @@ const DiscussionDetail = () => {
           break;
         case 'Escape':
           e.preventDefault();
-          handleBackClick();
+          if (replyingToCommentId) {
+            setReplyingToCommentId(null);
+          } else {
+            handleBackClick();
+          }
           break;
         case 'o':
           e.preventDefault();
@@ -141,7 +172,7 @@ const DiscussionDetail = () => {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [prevDiscussion, nextDiscussion, activeRepository, discussionNumber]);
+  }, [prevDiscussion, nextDiscussion, activeRepository, discussionNumber, replyingToCommentId]);
   
   if (isLoading) {
     return <DiscussionSkeleton onBackClick={handleBackClick} />;
@@ -179,13 +210,27 @@ const DiscussionDetail = () => {
       
       <DiscussionContent discussion={discussion} />
       
-      <CommentsList comments={allComments} />
-      
-      <CommentComposer 
-        discussionId={discussion.id} 
-        discussionNumber={discussionNumber}
-        onCommentAdded={handleAddComment}
+      <CommentsList 
+        comments={allComments} 
+        onReplyClick={handleReplyClick}
       />
+      
+      {replyingToCommentId ? (
+        <CommentComposer 
+          discussionId={discussion.id}
+          discussionNumber={discussionNumber}
+          onCommentAdded={handleAddComment}
+          replyToId={replyingToCommentId}
+          replyToComment={replyToComment}
+          onCancelReply={handleCancelReply}
+        />
+      ) : (
+        <CommentComposer 
+          discussionId={discussion.id} 
+          discussionNumber={discussionNumber}
+          onCommentAdded={handleAddComment}
+        />
+      )}
     </>
   );
 };

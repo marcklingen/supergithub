@@ -459,10 +459,12 @@ export function useAddDiscussionComment() {
     mutationFn: async ({ 
       discussionId, 
       body, 
+      replyToId = null,
       token 
     }: { 
       discussionId: string; 
-      body: string; 
+      body: string;
+      replyToId?: string | null;
       token?: string | null 
     }) => {
       if (!token) {
@@ -482,6 +484,9 @@ export function useAddDiscussionComment() {
               bodyHTML
               createdAt
               upvoteCount
+              replyTo {
+                id
+              }
               reactions(first: 10) {
                 nodes {
                   content
@@ -496,6 +501,7 @@ export function useAddDiscussionComment() {
         input: {
           discussionId,
           body,
+          ...(replyToId && { replyToId }),
         }
       };
 

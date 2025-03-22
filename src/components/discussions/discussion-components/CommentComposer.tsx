@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Send, AlertTriangle } from 'lucide-react';
+import { Loader2, Send, AlertTriangle, X } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,12 +13,18 @@ interface CommentComposerProps {
   discussionId: string;
   discussionNumber: number;
   onCommentAdded: (newComment: any) => void;
+  replyToId?: string | null;
+  replyToComment?: any;
+  onCancelReply?: () => void;
 }
 
 export const CommentComposer: React.FC<CommentComposerProps> = ({ 
   discussionId, 
   discussionNumber,
-  onCommentAdded
+  onCommentAdded,
+  replyToId = null,
+  replyToComment = null,
+  onCancelReply
 }) => {
   const { user, githubToken, setManualGithubToken } = useAuth();
   const [comment, setComment] = useState('');
@@ -30,15 +36,21 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   const addComment = useAddDiscussionComment();
   
   useEffect(() => {
-    const draftKey = `discussion-${discussionNumber}-draft`;
+    const draftKey = replyToId 
+      ? `discussion-${discussionNumber}-reply-${replyToId}-draft` 
+      : `discussion-${discussionNumber}-draft`;
+    
     const savedDraft = localStorage.getItem(draftKey);
     if (savedDraft) {
       setComment(savedDraft);
     }
-  }, [discussionNumber]);
+  }, [discussionNumber, replyToId]);
   
   useEffect(() => {
-    const draftKey = `discussion-${discussionNumber}-draft`;
+    const draftKey = replyToId 
+      ? `discussion-${discussionNumber}-reply-${replyToId}-draft` 
+      : `discussion-${discussionNumber}-draft`;
+    
     const debounceTimer = setTimeout(() => {
       if (comment.trim()) {
         localStorage.setItem(draftKey, comment);
@@ -46,7 +58,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     }, 500);
     
     return () => clearTimeout(debounceTimer);
-  }, [comment, discussionNumber]);
+  }, [comment, discussionNumber, replyToId]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -59,6 +71,13 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [comment]);
+  
+  useEffect(() => {
+    // Focus the textarea when composing a reply
+    if (replyToId && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [replyToId]);
   
   const handleSubmit = async () => {
     if (!comment.trim() || !githubToken || !discussionId) return;
@@ -91,7 +110,8 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       },
       isOptimistic: true,
       upvoteCount: 0,
-      reactions: { nodes: [] }
+      reactions: { nodes: [] },
+      replyTo: replyToId ? { id: replyToId } : null
     };
     
     onCommentAdded(optimisticComment);
@@ -100,14 +120,22 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       const result = await addComment.mutateAsync({
         discussionId,
         body: comment,
+        replyToId,
         token: githubToken
       });
       
       console.log("Comment API response:", result);
       
-      const draftKey = `discussion-${discussionNumber}-draft`;
+      const draftKey = replyToId 
+        ? `discussion-${discussionNumber}-reply-${replyToId}-draft` 
+        : `discussion-${discussionNumber}-draft`;
+      
       localStorage.removeItem(draftKey);
       setComment('');
+      
+      if (onCancelReply) {
+        onCancelReply();
+      }
       
       const realComment = result?.addDiscussionComment?.comment;
       if (realComment) {
@@ -154,7 +182,26 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   };
   
   return (
-    <div className="mt-6 border rounded-md p-4 bg-card">
+    <div className={`mt-6 border rounded-md p-4 bg-card ${replyToId ? 'border-primary/30' : ''}`}>
+      {replyToComment && (
+        <div className="flex justify-between items-center mb-3 pb-3 border-b">
+          <div className="text-sm text-muted-foreground">
+            Replying to <span className="font-medium">{replyToComment.author.login}</span>
+          </div>
+          {onCancelReply && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 p-0" 
+              onClick={onCancelReply}
+            >
+              <X size={16} />
+              <span className="sr-only">Cancel reply</span>
+            </Button>
+          )}
+        </div>
+      )}
+      
       <div className="flex items-start gap-3">
         <Avatar className="h-8 w-8 mt-1">
           <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || 'Anonymous'} />

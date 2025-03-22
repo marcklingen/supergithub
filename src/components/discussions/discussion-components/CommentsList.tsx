@@ -13,9 +13,10 @@ interface CommentsListProps {
       hasNextPage: boolean;
     }
   };
+  onReplyClick?: (commentId: string) => void;
 }
 
-export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
+export const CommentsList: React.FC<CommentsListProps> = ({ comments, onReplyClick }) => {
   // Only show top-level comments (comments that don't have a replyTo field)
   const topLevelComments = comments.nodes.filter(comment => !comment.replyTo);
   const totalCommentsCount = comments.totalCount + comments.nodes.filter((c: any) => c.isOptimistic).length;
@@ -38,7 +39,11 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
       ) : (
         <div className="space-y-4">
           {topLevelComments.map((comment: any) => (
-            <ThreadedComment key={comment.id} comment={comment} />
+            <ThreadedComment 
+              key={comment.id} 
+              comment={comment} 
+              onReplyClick={onReplyClick}
+            />
           ))}
         </div>
       )}

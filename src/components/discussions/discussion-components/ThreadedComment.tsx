@@ -1,21 +1,24 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { User, ArrowUp, Loader2, MessageCircle } from 'lucide-react';
+import { User, ArrowUp, Loader2, MessageCircle, Reply } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface ThreadedCommentProps {
   comment: any;
   depth?: number;
   maxDepth?: number;
+  onReplyClick?: (commentId: string) => void;
 }
 
 export const ThreadedComment: React.FC<ThreadedCommentProps> = ({ 
   comment, 
   depth = 0,
-  maxDepth = 3 
+  maxDepth = 3,
+  onReplyClick
 }) => {
   // Check if this comment has replies
   const hasReplies = comment.replies && comment.replies.nodes && comment.replies.nodes.length > 0;
@@ -80,15 +83,29 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
             dangerouslySetInnerHTML={{ __html: comment.bodyHTML }}
           />
         </CardContent>
-        {comment.reactions && comment.reactions.nodes.length > 0 && (
-          <CardFooter className="p-4 pt-0 flex-wrap gap-1">
-            {comment.reactions.nodes.map((reaction: any, index: number) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {reaction.content}
-              </Badge>
-            ))}
-          </CardFooter>
-        )}
+        <CardFooter className="p-4 pt-0 flex flex-wrap items-center justify-between">
+          <div className="flex flex-wrap gap-1">
+            {comment.reactions && comment.reactions.nodes.length > 0 && (
+              comment.reactions.nodes.map((reaction: any, index: number) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {reaction.content}
+                </Badge>
+              ))
+            )}
+          </div>
+          
+          {depth < 1 && onReplyClick && (
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="ml-auto gap-1 text-xs" 
+              onClick={() => onReplyClick(comment.id)}
+            >
+              <Reply size={14} />
+              Reply
+            </Button>
+          )}
+        </CardFooter>
       </Card>
       
       {/* Render replies if they exist and we haven't reached max depth */}
@@ -100,6 +117,7 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
                 comment={reply} 
                 depth={depth + 1}
                 maxDepth={maxDepth}
+                onReplyClick={onReplyClick}
               />
             </div>
           ))}
