@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { ExternalLink, Key } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface GitHubTokenDialogProps {
   open: boolean;
@@ -23,7 +22,6 @@ const GitHubTokenDialog = ({
   tokenInput,
   setTokenInput
 }: GitHubTokenDialogProps) => {
-  const navigate = useNavigate();
   
   const handleSetToken = () => {
     if (!tokenInput.trim()) {
@@ -45,11 +43,6 @@ const GitHubTokenDialog = ({
     }
     
     onSetToken(tokenInput.trim());
-  };
-
-  const handleReauthWithOrgAccess = () => {
-    onOpenChange(false); // Close the dialog
-    navigate('/auth?reauth=true&scope=read:org');
   };
   
   return (
@@ -75,21 +68,11 @@ const GitHubTokenDialog = ({
                   <ul className="list-disc pl-5 mt-1">
                     <li><code className="bg-background px-1 py-0.5 rounded">repo</code> (full control of private repositories)</li>
                     <li><code className="bg-background px-1 py-0.5 rounded">write:discussion</code> (read and write discussions)</li>
-                    <li><code className="bg-background px-1 py-0.5 rounded">read:org</code> (access organization repositories - optional)</li>
                     <li><code className="bg-background px-1 py-0.5 rounded">write:issue</code> (may be needed for some repositories)</li>
                   </ul>
                 </li>
                 <li>Click "Generate token" and copy the generated token</li>
               </ol>
-            </div>
-            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-200 dark:border-amber-800">
-              <p className="text-amber-800 dark:text-amber-400 text-sm font-medium mb-1">Important:</p>
-              <p className="text-sm text-amber-700 dark:text-amber-500">
-                Select the full <code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">repo</code> scope checkbox, not just the individual permissions. This grants access to both public and private repositories.
-              </p>
-              <p className="text-sm mt-2 text-amber-700 dark:text-amber-500">
-                Add <code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">read:org</code> scope if you want to access and manage discussions in organization repositories.
-              </p>
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -106,19 +89,6 @@ const GitHubTokenDialog = ({
             <p className="text-xs text-muted-foreground">
               Your token is stored locally in your browser and is never sent to our servers.
             </p>
-          </div>
-          <div className="pt-2 flex flex-col space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Alternatively, if you signed in with GitHub OAuth and need organization access:
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleReauthWithOrgAccess}
-              className="self-start"
-            >
-              Reconnect with Organization Access
-            </Button>
           </div>
         </div>
         <DialogFooter>
