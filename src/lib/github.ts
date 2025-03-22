@@ -1,3 +1,4 @@
+
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -152,6 +153,11 @@ export function useRepositoryDiscussions(
   return useQuery({
     queryKey: ['repositoryDiscussions', owner, name, categoryId, first, after, token],
     queryFn: async () => {
+      if (!token) {
+        throw new Error('GitHub token is required for this operation');
+      }
+      
+      // Updated query based on the GitHub Discussions API documentation
       const query = `
         query GetRepositoryDiscussions(
           $owner: String!, 
@@ -204,6 +210,7 @@ export function useRepositoryDiscussions(
         }
       `;
       
+      console.log('Fetching discussions with categoryId:', categoryId);
       return fetchGitHubAPI(
         query, 
         { 
@@ -229,6 +236,11 @@ export function useDiscussionDetails(
   return useQuery({
     queryKey: ['discussionDetails', owner, name, number, token],
     queryFn: async () => {
+      if (!token) {
+        throw new Error('GitHub token is required for this operation');
+      }
+      
+      // Updated query based on the GitHub Discussions API documentation
       const query = `
         query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
           repository(owner: $owner, name: $name) {
@@ -240,6 +252,7 @@ export function useDiscussionDetails(
               createdAt
               updatedAt
               upvoteCount
+              isAnswered
               author {
                 login
                 avatarUrl
@@ -266,6 +279,7 @@ export function useDiscussionDetails(
                   bodyHTML
                   createdAt
                   upvoteCount
+                  isAnswer
                   replyTo {
                     id
                   }
@@ -281,6 +295,7 @@ export function useDiscussionDetails(
         }
       `;
       
+      console.log('Fetching discussion details for number:', number);
       return fetchGitHubAPI(query, { owner, name, number }, token);
     },
     enabled: Boolean(owner) && Boolean(name) && Boolean(number) && Boolean(token),

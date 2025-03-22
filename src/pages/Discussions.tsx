@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,17 @@ const Discussions = () => {
   // State for the token input modal
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
+  
+  // Show token modal if no token is available after a short delay
+  useEffect(() => {
+    if (!githubToken) {
+      const timer = setTimeout(() => {
+        setShowTokenModal(true);
+      }, 500); // Small delay to avoid flash on initial load
+      
+      return () => clearTimeout(timer);
+    }
+  }, [githubToken]);
   
   const handleSetToken = () => {
     if (!tokenInput.trim()) {
@@ -79,7 +90,14 @@ const Discussions = () => {
             <DialogHeader>
               <DialogTitle>Set GitHub Token</DialogTitle>
               <DialogDescription>
-                A GitHub token is required to access discussions. Please enter your token below.
+                <p className="mb-4">
+                  A GitHub token with the <code className="bg-muted px-1 py-0.5 rounded">repo</code> scope is required to access discussions.
+                </p>
+                <ol className="list-decimal pl-5 space-y-2 text-sm">
+                  <li>Go to <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub Developer Settings</a></li>
+                  <li>Create a new token (classic) with the <code className="bg-muted px-1 py-0.5 rounded">repo</code> scope</li>
+                  <li>Copy the generated token and paste it below</li>
+                </ol>
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -105,17 +123,28 @@ const Discussions = () => {
           <div className="bg-muted p-6 rounded-lg text-center">
             <h3 className="text-lg font-medium mb-4">GitHub Token Required</h3>
             <p className="text-muted-foreground mb-4">
-              A GitHub token is required to access discussions. 
+              A GitHub token with the <code className="bg-accent px-1 py-0.5 rounded">repo</code> scope is required to access discussions. 
               Please set your token to continue.
             </p>
             <Button onClick={() => setShowTokenModal(true)}>
               Set GitHub Token
             </Button>
           </div>
-        ) : discussionNumber ? (
-          <DiscussionDetail />
         ) : (
-          <DiscussionList />
+          <>
+            {!activeRepository || !activeCategory ? (
+              <div className="bg-muted p-6 rounded-lg text-center">
+                <h3 className="text-lg font-medium mb-4">Select a Repository and Category</h3>
+                <p className="text-muted-foreground">
+                  Please select a repository and discussion category from the sidebar to view discussions.
+                </p>
+              </div>
+            ) : discussionNumber ? (
+              <DiscussionDetail />
+            ) : (
+              <DiscussionList />
+            )}
+          </>
         )}
       </div>
     </div>
