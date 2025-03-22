@@ -1,9 +1,21 @@
-import * as React from "react"
 
+import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onKeyDown, ...props }, ref) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Call the original onKeyDown handler if it exists
+      if (onKeyDown) {
+        onKeyDown(e);
+      }
+      
+      // Handle Escape key to blur the input
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.currentTarget.blur();
+      }
+    };
+    
     return (
       <input
         type={type}
@@ -12,6 +24,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
+        onKeyDown={handleKeyDown}
         {...props}
       />
     )

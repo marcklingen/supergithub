@@ -65,11 +65,19 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
         e.preventDefault();
         handleSubmit();
       }
+      
+      if (e.key === 'Escape' && textareaRef.current === document.activeElement) {
+        e.preventDefault();
+        textareaRef.current.blur();
+        if (onCancelReply) {
+          onCancelReply();
+        }
+      }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [comment]);
+  }, [comment, onCancelReply]);
   
   useEffect(() => {
     if (textareaRef.current) {
