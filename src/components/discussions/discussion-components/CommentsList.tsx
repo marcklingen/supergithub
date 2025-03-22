@@ -22,22 +22,22 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments, onReplyCli
   const totalCommentsCount = comments.totalCount + comments.nodes.filter((c: any) => c.isOptimistic).length;
 
   return (
-    <div className="mt-8">
-      <div className="flex items-center gap-2 mb-6">
-        <MessageSquare size={18} />
-        <h3 className="text-lg font-medium">
+    <div className="mt-6">
+      <div className="flex items-center gap-2 mb-3">
+        <MessageSquare size={16} />
+        <h3 className="text-base font-medium">
           Comments ({totalCommentsCount})
         </h3>
       </div>
       
       {topLevelComments.length === 0 ? (
-        <Card className="border bg-muted/30 text-center p-6">
-          <p className="text-muted-foreground">
+        <Card className="border bg-muted/30 text-center p-4">
+          <p className="text-muted-foreground text-sm">
             No comments yet.
           </p>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {topLevelComments.map((comment: any) => (
             <ThreadedComment 
               key={comment.id} 
@@ -49,8 +49,8 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments, onReplyCli
       )}
       
       {comments.pageInfo?.hasNextPage && (
-        <div className="flex justify-center mt-6">
-          <Button variant="outline">
+        <div className="flex justify-center mt-4">
+          <Button variant="outline" size="sm">
             Load More Comments
           </Button>
         </div>

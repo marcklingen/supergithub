@@ -29,19 +29,19 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
         key={comment.id} 
         className={`border ${comment.isOptimistic ? 'bg-muted/10 border-dashed' : ''}`}
       >
-        <CardHeader className="p-4 pb-2">
+        <CardHeader className="p-3 pb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-6 w-6">
                 <AvatarImage src={comment.author.avatarUrl} alt={comment.author.login} />
-                <AvatarFallback><User size={14} /></AvatarFallback>
+                <AvatarFallback><User size={12} /></AvatarFallback>
               </Avatar>
               <div>
                 <a 
                   href={comment.author.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="font-medium hover:underline"
+                  className="font-medium text-sm hover:underline"
                 >
                   {comment.author.login}
                 </a>
@@ -70,24 +70,24 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
             </div>
             
             {comment.upvoteCount > 0 && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <ArrowUp size={14} />
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <ArrowUp size={12} />
                 <span>{comment.upvoteCount}</span>
               </div>
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-2">
+        <CardContent className="p-3 pt-1">
           <div 
-            className="prose prose-sm max-w-none dark:prose-invert"
+            className="prose prose-sm max-w-none dark:prose-invert text-sm"
             dangerouslySetInnerHTML={{ __html: comment.bodyHTML }}
           />
         </CardContent>
-        <CardFooter className="p-4 pt-0 flex flex-wrap items-center justify-between">
+        <CardFooter className="p-2 flex flex-wrap items-center justify-between">
           <div className="flex flex-wrap gap-1">
             {comment.reactions && comment.reactions.nodes.length > 0 && (
               comment.reactions.nodes.map((reaction: any, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs">
+                <Badge key={index} variant="secondary" className="text-xs py-0 px-1.5 h-5">
                   {reaction.content}
                 </Badge>
               ))
@@ -98,10 +98,10 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
             <Button 
               size="sm" 
               variant="ghost" 
-              className="ml-auto gap-1 text-xs" 
+              className="ml-auto gap-1 text-xs h-6 px-2" 
               onClick={() => onReplyClick(comment.id)}
             >
-              <Reply size={14} />
+              <Reply size={12} />
               Reply
             </Button>
           )}
@@ -110,9 +110,9 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
       
       {/* Render replies if they exist and we haven't reached max depth */}
       {hasReplies && depth < maxDepth && (
-        <div className="ml-6 mt-2 pl-4 border-l-2 border-muted">
+        <div className="ml-4 mt-1 pl-2 border-l-2 border-muted">
           {comment.replies.nodes.map((reply: any) => (
-            <div key={reply.id} className="mt-2">
+            <div key={reply.id} className="mt-1">
               <ThreadedComment 
                 comment={reply} 
                 depth={depth + 1}
