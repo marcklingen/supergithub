@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Repositories from "./pages/Repositories";
 import Discussions from "./pages/Discussions";
 import AccountSettings from "./pages/AccountSettings";
+import GitHubToken from "./pages/GitHubToken";
 import Layout from "./pages/Layout";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/discussions" element={<Discussions />} />
                 <Route path="/discussions/:discussionNumber" element={<Discussions />} />
                 <Route path="/account-settings" element={<AccountSettings />} />
+                <Route path="/github-token" element={<GitHubToken />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

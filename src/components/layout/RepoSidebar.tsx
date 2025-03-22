@@ -11,7 +11,8 @@ import {
   Loader2,
   AlertTriangle,
   User,
-  LogOut
+  LogOut,
+  Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -90,6 +91,22 @@ const RepoSidebar = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleCopyToken = () => {
+    if (token) {
+      navigator.clipboard.writeText(token);
+      toast({
+        title: "Token copied",
+        description: "GitHub token copied to clipboard"
+      });
+    } else {
+      toast({
+        title: "No token available",
+        description: "Please sign in with GitHub to get a token",
+        variant: "destructive"
+      });
+    }
   };
   
   if (!user) {
@@ -261,6 +278,15 @@ const RepoSidebar = () => {
                 <span>Discussions</span>
               </Link>
             </li>
+            <li>
+              <Link 
+                to="/github-token" 
+                className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Copy size={16} />
+                <span>GitHub Token</span>
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
@@ -287,6 +313,10 @@ const RepoSidebar = () => {
             <DropdownMenuItem onClick={() => navigate('/account-settings')}>
               <User className="mr-2 h-4 w-4" />
               <span>Account Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCopyToken}>
+              <Copy className="mr-2 h-4 w-4" />
+              <span>Copy GitHub Token</span>
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="text-destructive focus:text-destructive"
