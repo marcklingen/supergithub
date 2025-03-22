@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -7,12 +8,11 @@ import DiscussionList from '@/components/discussions/DiscussionList';
 import DiscussionDetail from '@/components/discussions/DiscussionDetail';
 import GitHubTokenDialog from '@/components/discussions/GitHubTokenDialog';
 import EmptyRepositoryState from '@/components/discussions/EmptyRepositoryState';
-import EmptyCategoryState from '@/components/discussions/EmptyCategoryState';
 import TokenRequiredState from '@/components/discussions/TokenRequiredState';
 import DiscussionHeader from '@/components/discussions/DiscussionHeader';
 
 const Discussions = () => {
-  const { activeRepository, activeCategory, categories, setActiveCategory } = useRepo();
+  const { activeRepository, activeCategory } = useRepo();
   const { githubToken, setManualGithubToken } = useAuth();
   const { discussionNumber } = useParams<{ discussionNumber: string }>();
   const navigate = useNavigate();
@@ -67,11 +67,6 @@ const Discussions = () => {
           <>
             {!activeRepository ? (
               <EmptyRepositoryState onNavigateToRepositories={handleNavigateToRepositories} />
-            ) : !activeCategory ? (
-              <EmptyCategoryState 
-                onShowTokenModal={() => setShowTokenModal(true)} 
-                onNavigateToRepositories={handleNavigateToRepositories}
-              />
             ) : discussionNumber ? (
               <DiscussionDetail />
             ) : (

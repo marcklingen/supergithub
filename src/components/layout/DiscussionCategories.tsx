@@ -31,6 +31,24 @@ const DiscussionCategories: React.FC = () => {
     token
   );
   
+  // Set first category as active if data is loaded and no category is selected
+  useEffect(() => {
+    if (data?.repository?.discussionCategories?.nodes?.length > 0 && !activeCategory) {
+      const firstCategory = data.repository.discussionCategories.nodes[0];
+      setActiveCategory({
+        id: firstCategory.id,
+        name: firstCategory.name,
+        emoji: firstCategory.emoji,
+        description: firstCategory.description
+      });
+      
+      // Only navigate to discussions if we're not already there or in a specific discussion
+      if (!location.pathname.includes('/discussions')) {
+        navigate('/discussions');
+      }
+    }
+  }, [data, activeCategory, setActiveCategory, navigate, location.pathname]);
+  
   // Add keyboard shortcut handling
   useEffect(() => {
     if (!data?.repository?.discussionCategories?.nodes?.length || !activeRepository) return;
