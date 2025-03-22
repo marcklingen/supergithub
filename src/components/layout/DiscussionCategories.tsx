@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useRepo, DiscussionCategory } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepositoryDiscussionCategories } from '@/lib/github';
@@ -11,9 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { convertEmojiText } from '@/lib/utils';
 
 const DiscussionCategories: React.FC = () => {
-  const { activeRepository, setActiveCategory, activeCategory } = useRepo();
+  const { activeRepository, setActiveCategory, activeCategory, categories } = useRepo();
   const { githubToken, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   
   const token = githubToken || user?.user_metadata?.provider_token;
@@ -29,6 +30,41 @@ const DiscussionCategories: React.FC = () => {
     activeRepository?.name || '', 
     token
   );
+  
+  // Add keyboard shortcut handling
+  useEffect(() => {
+    if (!data?.repository?.discussionCategories?.nodes?.length || !activeRepository) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when in discussion detail view or when typing in input fields
+      if (location.pathname.includes('/discussions/') || 
+          document.activeElement?.tagName === 'INPUT' || 
+          document.activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      // Use number keys 1-9 without modifier keys
+      if (e.key >= '1' && e.key <= '9') {
+        const numericIndex = parseInt(e.key) - 1;
+        const categories = data.repository.discussionCategories.nodes;
+        
+        if (numericIndex >= 0 && numericIndex < categories.length) {
+          e.preventDefault();
+          const category = categories[numericIndex];
+          setActiveCategory({
+            id: category.id,
+            name: category.name,
+            emoji: category.emoji,
+            description: category.description
+          });
+          navigate('/discussions');
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [data, activeRepository, setActiveCategory, location.pathname, navigate]);
   
   const handleCategoryClick = (category: DiscussionCategory) => {
     setActiveCategory(category);

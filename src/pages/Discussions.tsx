@@ -31,30 +31,7 @@ const Discussions = () => {
     }
   }, [githubToken]);
   
-  useEffect(() => {
-    if (!categories.length || !activeRepository) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (discussionNumber) return;
-      
-      if (document.activeElement?.tagName === 'INPUT' || 
-          document.activeElement?.tagName === 'TEXTAREA') {
-        return;
-      }
-      
-      // Changed from requiring meta/ctrl key to just number keys
-      if (e.key >= '1' && e.key <= '9') {
-        const numericIndex = parseInt(e.key) - 1;
-        if (numericIndex >= 0 && numericIndex < categories.length) {
-          e.preventDefault();
-          setActiveCategory(categories[numericIndex]);
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [categories, activeCategory, discussionNumber, setActiveCategory]);
+  // Let's remove this keyboard handler since we're moving it to DiscussionCategories component
   
   const handleSetToken = (token: string) => {
     setManualGithubToken(token);

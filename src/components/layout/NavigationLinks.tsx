@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FolderKanban, MessageSquare } from 'lucide-react';
+import { CommandShortcut } from '@/components/ui/command';
 
 const NavigationLinks: React.FC = () => {
   return (
@@ -13,19 +14,25 @@ const NavigationLinks: React.FC = () => {
         <li>
           <Link 
             to="/repositories" 
-            className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex items-center justify-between gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
-            <FolderKanban size={16} />
-            <span>Repositories</span>
+            <div className="flex items-center gap-2">
+              <FolderKanban size={16} />
+              <span>Repositories</span>
+            </div>
+            <CommandShortcut className="text-xs">r</CommandShortcut>
           </Link>
         </li>
         <li>
           <Link 
             to="/discussions" 
-            className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex items-center justify-between gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
-            <MessageSquare size={16} />
-            <span>Discussions</span>
+            <div className="flex items-center gap-2">
+              <MessageSquare size={16} />
+              <span>Discussions</span>
+            </div>
+            <CommandShortcut className="text-xs">d</CommandShortcut>
           </Link>
         </li>
       </ul>
