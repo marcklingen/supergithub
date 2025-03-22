@@ -1,9 +1,11 @@
+
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiscussionDetails } from '@/lib/github';
 import ThreadNavigation from './ThreadNavigation';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   User,
   Clock,
