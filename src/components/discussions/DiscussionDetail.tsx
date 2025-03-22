@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -108,12 +107,10 @@ const DiscussionDetail = () => {
   const handleReplyClick = (commentId: string) => {
     setReplyingToCommentId(commentId);
     
-    // Scroll to the comment composer after a short delay to ensure it's rendered
     setTimeout(() => {
       if (commentComposerRef.current) {
         commentComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Focus the textarea inside the composer
         const textarea = commentComposerRef.current.querySelector('textarea');
         if (textarea) {
           textarea.focus();
@@ -126,7 +123,6 @@ const DiscussionDetail = () => {
     setReplyingToCommentId(null);
   };
   
-  // Get the comment being replied to (if any)
   const findCommentById = (commentId: string, comments: any[]): any => {
     for (const comment of comments) {
       if (comment.id === commentId) return comment;
@@ -144,11 +140,9 @@ const DiscussionDetail = () => {
   
   const focusCommentComposer = () => {
     if (!replyingToCommentId) {
-      // If not replying to a specific comment, focus the main comment composer
       if (commentComposerRef.current) {
         commentComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Focus the textarea inside the composer
         const textarea = commentComposerRef.current.querySelector('textarea');
         if (textarea) {
           textarea.focus();
@@ -162,7 +156,9 @@ const DiscussionDetail = () => {
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
-        e.target instanceof HTMLSelectElement
+        e.target instanceof HTMLSelectElement ||
+        e.metaKey ||
+        e.ctrlKey
       ) {
         return;
       }

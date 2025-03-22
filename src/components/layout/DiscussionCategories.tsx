@@ -55,10 +55,14 @@ const DiscussionCategories: React.FC = () => {
     if (!data?.repository?.discussionCategories?.nodes?.length || !activeRepository) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger shortcuts when in discussion detail view or when typing in input fields
+      // Don't trigger shortcuts when in discussion detail view, when typing in input fields,
+      // or when using modifier keys (Cmd, Ctrl, etc.)
       if (location.pathname.includes('/discussions/') || 
           document.activeElement?.tagName === 'INPUT' || 
-          document.activeElement?.tagName === 'TEXTAREA') {
+          document.activeElement?.tagName === 'TEXTAREA' ||
+          e.metaKey ||  // Skip if Command/Meta key is pressed
+          e.ctrlKey     // Skip if Control key is pressed
+      ) {
         return;
       }
       
