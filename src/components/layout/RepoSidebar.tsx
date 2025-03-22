@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import RepositoryDropdown from './RepositoryDropdown';
 import DiscussionCategories from './DiscussionCategories';
 import UserProfile from './UserProfile';
+import ThemeSwitcher from './ThemeSwitcher';
 
 const RepoSidebar = () => {
   const { user } = useAuth();
@@ -14,8 +15,9 @@ const RepoSidebar = () => {
   if (!user) {
     return (
       <div className="w-64 h-screen border-r bg-sidebar">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b flex items-center justify-between">
           <h3 className="text-lg font-semibold">SuperGitHub</h3>
+          <ThemeSwitcher />
         </div>
         <div className="p-4">
           <p>Please sign in to continue</p>
@@ -32,10 +34,11 @@ const RepoSidebar = () => {
   
   return (
     <div className="w-64 h-screen border-r bg-sidebar text-sidebar-foreground flex flex-col">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex items-center justify-between">
         <Link to="/" className="text-lg font-semibold hover:text-primary transition-colors">
           SuperGitHub
         </Link>
+        <ThemeSwitcher />
       </div>
       
       <div className="flex-1 overflow-auto">
