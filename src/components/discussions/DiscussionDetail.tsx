@@ -3,13 +3,14 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDiscussionDetails } from '@/lib/github';
+import { useDiscussionDetails, useRepositoryDiscussions } from '@/lib/github';
 import ThreadNavigation from './ThreadNavigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
   User,
   Clock,
   ArrowUp,
+  ArrowDown,
   MessageCircle,
   ChevronLeft,
   Loader2,
@@ -28,11 +29,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DiscussionDetail = () => {
   const params = useParams();
   const { githubToken } = useAuth();
-  const { activeRepository } = useRepo();
+  const { activeRepository, activeCategory } = useRepo();
   const navigate = useNavigate();
   
   const discussionNumber = Number(params.discussionNumber);
@@ -48,6 +50,31 @@ const DiscussionDetail = () => {
     discussionNumber,
     githubToken
   );
+  
+  const { data: discussionsData } = useRepositoryDiscussions(
+    activeRepository?.owner || '',
+    activeRepository?.name || '',
+    activeCategory?.id || '',
+    50, // Fetch more discussions to have a complete list for navigation
+    undefined,
+    githubToken
+  );
+  
+  const discussions = discussionsData?.repository?.discussions?.nodes || [];
+  
+  // Find the current index
+  const currentIndex = discussions.findIndex(
+    (discussion) => discussion.number === discussionNumber
+  );
+  
+  const prevDiscussion = currentIndex > 0 ? discussions[currentIndex - 1] : null;
+  const nextDiscussion = currentIndex < discussions.length - 1 ? discussions[currentIndex + 1] : null;
+  
+  const navigateTo = (discussion: any) => {
+    if (discussion) {
+      navigate(`/discussions/${discussion.number}`);
+    }
+  };
   
   const discussion = data?.repository?.discussion;
   
@@ -167,6 +194,44 @@ const DiscussionDetail = () => {
         </Button>
         
         <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateTo(prevDiscussion)}
+                  disabled={!prevDiscussion}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                  <span className="sr-only">Previous discussion</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Previous discussion (k)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateTo(nextDiscussion)}
+                  disabled={!nextDiscussion}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                  <span className="sr-only">Next discussion</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Next discussion (j)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <Button 
             variant="outline" 
             size="sm" 
