@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -37,19 +38,19 @@ import {
 const Repositories = () => {
   const [repoInput, setRepoInput] = useState('');
   const { repositories, addRepository, removeRepository, setActiveRepository } = useRepo();
-  const { user } = useAuth();
+  const { user, githubToken } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
   const [debugMode, setDebugMode] = useState(false);
-  const token = user?.user_metadata?.provider_token;
   
   useEffect(() => {
-    console.log("GitHub token available:", !!token);
-    if (!token) {
+    console.log("GitHub token available:", !!githubToken);
+    if (!githubToken) {
       console.log("User metadata:", user?.user_metadata);
+      console.log("App metadata:", user?.app_metadata);
     }
-  }, [token, user]);
+  }, [githubToken, user]);
   
   const { 
     data: githubRepos, 
@@ -57,7 +58,7 @@ const Repositories = () => {
     isError: isReposError,
     error,
     refetch
-  } = useUserRepositories(token);
+  } = useUserRepositories(githubToken);
   
   useEffect(() => {
     console.log("GitHub repos response:", githubRepos);
@@ -140,14 +141,14 @@ const Repositories = () => {
         </p>
         
         {debugMode && (
-          <Alert className="mb-8" variant={token ? "default" : "destructive"}>
+          <Alert className="mb-8" variant={githubToken ? "default" : "destructive"}>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>GitHub Token Status</AlertTitle>
             <AlertDescription>
-              {token ? (
+              {githubToken ? (
                 <div>
                   <p>GitHub token available ✅</p>
-                  <p className="text-xs mt-2">Token starts with: {token.substring(0, 10)}...</p>
+                  <p className="text-xs mt-2">Token starts with: {githubToken.substring(0, 10)}...</p>
                 </div>
               ) : (
                 <div>

@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  githubToken: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -15,7 +16,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [githubToken, setGithubToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Function to extract GitHub token from user session
+  const extractGitHubToken = (session: Session | null) => {
+    if (!session?.user) return null;
+    
+    // Check for GitHub provider token in user metadata
+    const providerToken = session.user.app_metadata?.provider_token;
+    
+    // If we don't have a provider token, check for it in user_metadata
+    if (!providerToken && session.user.user_metadata?.provider === 'github') {
+      return session.user.user_metadata?.access_token || null;
+    }
+    
+    return providerToken || null;
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -23,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (_, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setGithubToken(extractGitHubToken(session));
         setLoading(false);
       }
     );
@@ -31,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setGithubToken(extractGitHubToken(session));
       setLoading(false);
     });
 
@@ -42,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, githubToken, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
