@@ -109,10 +109,6 @@ export interface DiscussionDetailsResponse {
   _orgAccessError?: boolean;
 }
 
-// Add types for sort field and order
-export type SortField = 'CREATED_AT' | 'UPDATED_AT';
-export type SortOrder = 'ASC' | 'DESC';
-
 // Make queryClient globally accessible for prefetching
 declare global {
   interface Window {
@@ -310,12 +306,10 @@ export function useRepositoryDiscussions(
   first: number = 10,
   after?: string,
   token?: string | null,
-  options?: Partial<UseQueryOptions<DiscussionsResponse, Error>>,
-  sortField: SortField = 'UPDATED_AT',
-  sortOrder: SortOrder = 'DESC'
+  options?: Partial<UseQueryOptions<DiscussionsResponse, Error>>
 ) {
   return useQuery({
-    queryKey: ['repositoryDiscussions', owner, name, categoryId, after, sortField, sortOrder],
+    queryKey: ['repositoryDiscussions', owner, name, categoryId, after],
     queryFn: async (): Promise<DiscussionsResponse> => {
       if (!token) {
         throw new Error('GitHub token is required for this operation');
@@ -327,15 +321,13 @@ export function useRepositoryDiscussions(
           $name: String!, 
           $categoryId: ID!, 
           $first: Int!, 
-          $after: String,
-          $orderBy: DiscussionOrder!
+          $after: String
         ) {
           repository(owner: $owner, name: $name) {
             discussions(
               first: $first, 
               after: $after, 
-              categoryId: $categoryId,
-              orderBy: $orderBy
+              categoryId: $categoryId
             ) {
               pageInfo {
                 hasNextPage
@@ -375,7 +367,6 @@ export function useRepositoryDiscussions(
       `;
       
       console.log('Fetching discussions with categoryId:', categoryId);
-      console.log('Using sort field:', sortField, 'and order:', sortOrder);
       
       return fetchGitHubAPI(
         query, 
@@ -384,11 +375,7 @@ export function useRepositoryDiscussions(
           name, 
           categoryId, 
           first, 
-          after: after || null,
-          orderBy: {
-            field: sortField,
-            direction: sortOrder
-          }
+          after: after || null
         }, 
         token
       );

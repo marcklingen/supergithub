@@ -1,14 +1,12 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepo } from '@/contexts/RepoContext';
 import { 
   useRepositoryDiscussions, 
-  Discussion, 
-  SortField, 
-  SortOrder 
+  Discussion
 } from '@/lib/github';
-import { convertEmojiText } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   MessageCircle, 
@@ -16,9 +14,7 @@ import {
   User, 
   Clock,
   ArrowUp,
-  Loader2,
-  SortAsc,
-  SortDesc
+  Loader2
 } from 'lucide-react';
 import { 
   Card, 
@@ -28,13 +24,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface DiscussionListProps {
   prefetchedDiscussions?: Discussion[];
@@ -46,22 +35,9 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
-  const [sortField, setSortField] = useState<string>('UPDATED_AT');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const mapSortField = (field: string): SortField => {
-    switch (field) {
-      case 'createdAt':
-        return 'CREATED_AT';
-      case 'updatedAt':
-        return 'UPDATED_AT';
-      default:
-        return 'UPDATED_AT';
-    }
-  };
   
   const { 
     data, 
@@ -83,9 +59,7 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
               Boolean(activeRepository?.name) && 
               Boolean(activeCategory?.id) && 
               Boolean(githubToken)
-    },
-    mapSortField(sortField),
-    sortOrder
+    }
   );
   
   const initialDiscussions = prefetchedDiscussions.length > 0 
@@ -202,21 +176,6 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
     navigate(`/discussions/${discussion.number}`);
   };
 
-  const handleSortChange = (value: string) => {
-    setSortField(value);
-    setCursor(undefined);
-    setAllDiscussions([]);
-    refetch();
-  };
-
-  const toggleSortOrder = () => {
-    const newOrder = sortOrder === 'ASC' ? 'DESC' : 'ASC';
-    setSortOrder(newOrder);
-    setCursor(undefined);
-    setAllDiscussions([]);
-    refetch();
-  };
-  
   if (isLoading && !allDiscussions.length) {
     return (
       <div className="space-y-4">
@@ -269,31 +228,6 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="text-sm text-muted-foreground">
           {totalCount} {totalCount === 1 ? 'discussion' : 'discussions'} in this category
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Select
-            value={sortField}
-            onValueChange={handleSortChange}
-          >
-            <SelectTrigger className="w-[180px] h-9">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="updatedAt">Last Updated</SelectItem>
-              <SelectItem value="createdAt">Created Date</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleSortOrder}
-            className="h-9 px-3"
-            title={`Sort ${sortOrder === 'ASC' ? 'Ascending' : 'Descending'}`}
-          >
-            {sortOrder === 'ASC' ? <SortAsc size={16} /> : <SortDesc size={16} />}
-          </Button>
         </div>
       </div>
       
