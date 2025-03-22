@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Send, AlertTriangle, X } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+
+import React, { useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddDiscussionComment } from '@/lib/github';
 import { toast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useCommentDraft } from '@/hooks/useCommentDraft';
+import { CommentForm } from './comment-composer/CommentForm';
+import { CommentError } from './comment-composer/CommentError';
+import { ReplyHeader } from './comment-composer/ReplyHeader';
 
 interface CommentComposerProps {
   discussionId: string;
@@ -26,38 +26,17 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   onCancelReply
 }) => {
   const { user, githubToken, setManualGithubToken } = useAuth();
-  const [comment, setComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showTokenHelp, setShowTokenHelp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [showTokenHelp, setShowTokenHelp] = React.useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const addComment = useAddDiscussionComment();
   
-  useEffect(() => {
-    const draftKey = replyToId 
-      ? `discussion-${discussionNumber}-reply-${replyToId}-draft` 
-      : `discussion-${discussionNumber}-draft`;
-    
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      setComment(savedDraft);
-    }
-  }, [discussionNumber, replyToId]);
-  
-  useEffect(() => {
-    const draftKey = replyToId 
-      ? `discussion-${discussionNumber}-reply-${replyToId}-draft` 
-      : `discussion-${discussionNumber}-draft`;
-    
-    const debounceTimer = setTimeout(() => {
-      if (comment.trim()) {
-        localStorage.setItem(draftKey, comment);
-      }
-    }, 500);
-    
-    return () => clearTimeout(debounceTimer);
-  }, [comment, discussionNumber, replyToId]);
+  const { comment, setComment, clearDraft } = useCommentDraft({
+    discussionNumber,
+    replyToId
+  });
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,10 +59,8 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   }, [comment, onCancelReply]);
   
   useEffect(() => {
-    if (textareaRef.current) {
-      if (replyToId) {
-        textareaRef.current.focus();
-      }
+    if (textareaRef.current && replyToId) {
+      textareaRef.current.focus();
     }
   }, [replyToId]);
   
@@ -95,14 +72,14 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     setShowTokenHelp(false);
     
     const userDisplayName = user?.user_metadata?.user_name || 
-                            user?.user_metadata?.full_name || 
-                            user?.email?.split('@')[0] || 
-                            'You';
+                          user?.user_metadata?.full_name || 
+                          user?.email?.split('@')[0] || 
+                          'You';
     
     const userAvatarUrl = user?.user_metadata?.avatar_url || '';
     const userProfileUrl = user?.user_metadata?.provider_id ? 
-                            `https://github.com/${user.user_metadata.provider_id}` : 
-                            '#';
+                          `https://github.com/${user.user_metadata.provider_id}` : 
+                          '#';
     
     const optimisticId = `optimistic-${Date.now()}`;
     
@@ -133,12 +110,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       
       console.log("Comment API response:", result);
       
-      const draftKey = replyToId 
-        ? `discussion-${discussionNumber}-reply-${replyToId}-draft` 
-        : `discussion-${discussionNumber}-draft`;
-      
-      localStorage.removeItem(draftKey);
-      setComment('');
+      clearDraft();
       
       if (onCancelReply) {
         onCancelReply();
@@ -189,89 +161,25 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   
   return (
     <div className={`mt-6 border rounded-md p-4 bg-card ${replyToId ? 'border-primary/30' : ''}`}>
-      {replyToComment && (
-        <div className="flex justify-between items-center mb-3 pb-3 border-b">
-          <div className="text-sm text-muted-foreground">
-            Replying to <span className="font-medium">{replyToComment.author.login}</span>
-          </div>
-          {onCancelReply && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 w-7 p-0" 
-              onClick={onCancelReply}
-            >
-              <X size={16} />
-              <span className="sr-only">Cancel reply</span>
-            </Button>
-          )}
-        </div>
-      )}
+      <ReplyHeader 
+        replyToComment={replyToComment} 
+        onCancelReply={onCancelReply} 
+      />
       
-      <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8 mt-1">
-          <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || 'Anonymous'} />
-          <AvatarFallback>{(user?.email?.[0] || 'A').toUpperCase()}</AvatarFallback>
-        </Avatar>
-        
-        <div className="flex-1 space-y-3">
-          <Textarea
-            ref={textareaRef}
-            placeholder="Write a comment... (Markdown supported)"
-            className="min-h-24 resize-y"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            disabled={isSubmitting}
-          />
-          
-          {errorMessage && (
-            <Alert variant="destructive" className="mb-2">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Error: {errorMessage}</AlertTitle>
-              <AlertDescription className="mt-1">
-                <p>Your comment was saved as a draft and will be available when you return.</p>
-                {showTokenHelp && (
-                  <div className="mt-2">
-                    <p>
-                      This is likely because your GitHub token doesn't have the necessary permissions.
-                      You need to re-authenticate with GitHub to get a token with proper scopes:
-                    </p>
-                    <ul className="list-disc ml-5 my-2 text-sm">
-                      <li>The <code className="bg-background/30 px-1 rounded">repo</code> scope for access to repositories</li>
-                      <li>The <code className="bg-background/30 px-1 rounded">write:discussion</code> scope for discussions</li>
-                      <li>The <code className="bg-background/30 px-1 rounded">write:issue</code> scope may also be needed</li>
-                    </ul>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2" 
-                      onClick={handleReauth}
-                    >
-                      Re-authenticate with GitHub
-                    </Button>
-                  </div>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-muted-foreground">
-              Press <kbd className="px-1 py-0.5 text-xs border rounded">Cmd</kbd> + <kbd className="px-1 py-0.5 text-xs border rounded">Enter</kbd> to submit
-            </div>
-            
-            <Button 
-              type="button" 
-              onClick={handleSubmit}
-              disabled={!comment.trim() || isSubmitting}
-              className="gap-2"
-            >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send
-            </Button>
-          </div>
-        </div>
-      </div>
+      <CommentError 
+        errorMessage={errorMessage || ''} 
+        showTokenHelp={showTokenHelp} 
+        handleReauth={handleReauth} 
+      />
+      
+      <CommentForm 
+        user={user}
+        comment={comment}
+        isSubmitting={isSubmitting}
+        textareaRef={textareaRef}
+        onCommentChange={setComment}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 };
