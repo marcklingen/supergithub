@@ -66,6 +66,14 @@ const DiscussionDetail = () => {
     setOptimisticComments([]);
   }, [discussionNumber]);
   
+  // Clean up optimistic comments when the discussion data is refetched
+  useEffect(() => {
+    if (discussion) {
+      // When data is refreshed, clear any optimistic comments that are no longer needed
+      setOptimisticComments([]);
+    }
+  }, [data]);
+  
   const handleBackClick = () => {
     navigate('/discussions');
   };
@@ -82,9 +90,20 @@ const DiscussionDetail = () => {
       });
     } else {
       // If it's a real comment from the API, remove any optimistic versions
-      setOptimisticComments(prev => 
-        prev.filter(c => c.id !== 'optimistic-' + newComment.id)
-      );
+      // Also identify if the new comment matches an optimistic one by comparing body content
+      const optimisticId = optimisticComments.find(c => 
+        c.bodyHTML.replace(/<br>/g, '\n') === newComment.bodyHTML
+      )?.id;
+      
+      if (optimisticId) {
+        setOptimisticComments(prev => 
+          prev.filter(c => c.id !== optimisticId)
+        );
+      } else {
+        // If no matching optimistic comment found, clear all optimistic comments
+        // as a fallback to prevent duplicates
+        setOptimisticComments([]);
+      }
       
       // Refetch the discussion to get the latest comments
       setTimeout(() => {

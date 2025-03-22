@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, Send, AlertTriangle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,8 +77,11 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                             `https://github.com/${user.user_metadata.provider_id}` : 
                             '#';
     
+    // Generate a unique ID for this optimistic comment
+    const optimisticId = `optimistic-${Date.now()}`;
+    
     const optimisticComment = {
-      id: `optimistic-${Date.now()}`,
+      id: optimisticId,
       bodyHTML: comment.replace(/\n/g, '<br>'),
       createdAt: new Date().toISOString(),
       author: {
@@ -107,6 +111,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       
       const realComment = result?.addDiscussionComment?.comment;
       if (realComment) {
+        // Add the real comment
         onCommentAdded(realComment);
         
         toast({
