@@ -5,11 +5,13 @@ import { Discussion } from '@/lib/github';
 interface UseDiscussionCommentsProps {
   discussionNumber: number;
   discussion: any;
+  refetch: () => void; // Add refetch function from the parent component
 }
 
 export const useDiscussionComments = ({
   discussionNumber,
-  discussion
+  discussion,
+  refetch
 }: UseDiscussionCommentsProps) => {
   const [optimisticComments, setOptimisticComments] = useState<any[]>([]);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
@@ -75,10 +77,21 @@ export const useDiscussionComments = ({
         setOptimisticComments(prev => 
           prev.filter(c => c.id !== optimisticId)
         );
+        
+        // Refetch comments after a real comment is added
+        // This ensures both top-level and threaded comments are properly updated
+        setTimeout(() => {
+          refetch();
+        }, 500);
       } else {
         // If we couldn't find a matching optimistic comment, clear all optimistic comments
         // This is a fallback to prevent UI issues
         setOptimisticComments([]);
+        
+        // Still refetch to ensure we have the latest data
+        setTimeout(() => {
+          refetch();
+        }, 500);
       }
     }
   };

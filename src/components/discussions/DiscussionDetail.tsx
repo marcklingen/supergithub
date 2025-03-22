@@ -70,7 +70,7 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
   
   const discussion = data?.repository?.discussion;
   
-  // Use custom hooks
+  // Use custom hooks - pass refetch to useDiscussionComments
   const {
     optimisticComments,
     replyingToCommentId,
@@ -81,7 +81,8 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
     getReplyToComment
   } = useDiscussionComments({
     discussionNumber,
-    discussion
+    discussion,
+    refetch  // Pass the refetch function here
   });
   
   const { navigateTo, handleBackClick } = useDiscussionNavigation({
@@ -100,19 +101,8 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
     nextDiscussion
   });
   
-  // Add a refetch after a successful comment post
-  useEffect(() => {
-    if (!optimisticComments.length) return;
-    
-    // If we have optimistic comments but they're not real yet
-    if (optimisticComments.some(c => c.isOptimistic)) return;
-    
-    const timer = setTimeout(() => {
-      refetch();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [optimisticComments, refetch]);
+  // We can remove this effect since we now refetch in the hook
+  // directly after a comment is successfully posted
   
   if (isLoading) {
     return <DiscussionSkeleton onBackClick={handleBackClick} />;
