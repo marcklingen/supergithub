@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { User, ArrowUp, Loader2, MessageCircle, Reply } from 'lucide-react';
+import { User, ArrowUp, Reply } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -29,16 +29,16 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
         key={comment.id} 
         className={`border ${comment.isOptimistic ? 'bg-muted/10 border-dashed' : ''}`}
       >
-        <CardContent className="p-2">
-          {/* Comment header with all elements in a single row */}
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-1.5 flex-grow min-w-0">
-              <Avatar className="h-5 w-5">
+        <CardContent className="p-3">
+          {/* Single line header with all elements */}
+          <div className="flex items-center justify-between space-x-2 mb-2">
+            <div className="flex items-center min-w-0 flex-1">
+              <Avatar className="h-5 w-5 mr-1.5">
                 <AvatarImage src={comment.author.avatarUrl} alt={comment.author.login} />
                 <AvatarFallback><User size={10} /></AvatarFallback>
               </Avatar>
               
-              <div className="flex items-center gap-1 overflow-hidden text-xs">
+              <div className="flex items-center gap-1.5 text-xs overflow-hidden">
                 <a 
                   href={comment.author.url} 
                   target="_blank" 
@@ -47,6 +47,7 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
                 >
                   {comment.author.login}
                 </a>
+                
                 <span className="text-muted-foreground">•</span>
                 <span className="text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
@@ -55,26 +56,19 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
                 {comment.isOptimistic && (
                   <>
                     <span className="text-muted-foreground">•</span>
-                    <span className="flex items-center gap-0.5 text-muted-foreground">
-                      <Loader2 size={10} className="animate-spin" />
-                      <span className="whitespace-nowrap">Posting...</span>
-                    </span>
-                  </>
-                )}
-                
-                {comment.replyTo && (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="flex items-center gap-0.5 text-muted-foreground">
-                      <MessageCircle size={10} />
-                      <span className="whitespace-nowrap">Reply</span>
+                    <span className="flex items-center gap-0.5 text-muted-foreground whitespace-nowrap">
+                      <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Posting...</span>
                     </span>
                   </>
                 )}
               </div>
             </div>
             
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 ml-auto shrink-0">
               {comment.upvoteCount > 0 && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <ArrowUp size={10} />
@@ -82,14 +76,14 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
                 </div>
               )}
               
-              {depth < 1 && onReplyClick && (
+              {onReplyClick && (
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-5 px-1.5 text-xs gap-1" 
+                  className="h-5 px-1 text-xs" 
                   onClick={() => onReplyClick(comment.id)}
                 >
-                  <Reply size={10} />
+                  <Reply size={12} className="mr-1" />
                   <span className="hidden sm:inline">Reply</span>
                 </Button>
               )}
@@ -98,13 +92,13 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
           
           {/* Comment content */}
           <div 
-            className="prose prose-sm max-w-none dark:prose-invert text-xs pl-6.5 ml-0.5"
+            className="prose prose-sm max-w-none dark:prose-invert text-xs"
             dangerouslySetInnerHTML={{ __html: comment.bodyHTML }}
           />
           
           {/* Reactions (if any) */}
           {comment.reactions && comment.reactions.nodes.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1 pl-6.5 ml-0.5">
+            <div className="flex flex-wrap gap-1 mt-1">
               {comment.reactions.nodes.map((reaction: any, index: number) => (
                 <Badge key={index} variant="secondary" className="text-xs py-0 px-1 h-4">
                   {reaction.content}
