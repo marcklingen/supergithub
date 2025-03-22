@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -258,7 +257,7 @@ const Repositories = () => {
               </CardHeader>
               
               <CardContent>
-                {!token && (
+                {!githubToken && (
                   <Alert className="mb-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>GitHub Authentication Required</AlertTitle>
