@@ -14,12 +14,12 @@ const RepoSidebar = () => {
   
   if (!user) {
     return (
-      <div className="w-full h-full">
+      <div className="w-full h-full flex flex-col">
         <div className="p-4 border-b flex items-center justify-between">
           <h3 className="text-lg font-semibold">SuperGitHub</h3>
           <ThemeSwitcher />
         </div>
-        <div className="p-4">
+        <div className="p-4 flex-1">
           <p>Please sign in to continue</p>
           <Button 
             className="w-full mt-4" 
@@ -46,7 +46,9 @@ const RepoSidebar = () => {
         <DiscussionCategories />
       </div>
       
-      <UserProfile />
+      <div className="mt-auto border-t">
+        <UserProfile />
+      </div>
     </div>
   );
 };

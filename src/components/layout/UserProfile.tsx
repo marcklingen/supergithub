@@ -67,7 +67,7 @@ const UserProfile: React.FC = () => {
   };
   
   return (
-    <div className="p-4 border-t mt-auto">
+    <div className="p-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="w-full flex items-center justify-start gap-2 h-auto py-2">
