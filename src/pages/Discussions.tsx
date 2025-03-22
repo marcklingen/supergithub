@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -11,6 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import DiscussionList from '@/components/discussions/DiscussionList';
 import DiscussionDetail from '@/components/discussions/DiscussionDetail';
 import { AlertTriangle } from 'lucide-react';
+import { convertEmojiText } from '@/lib/utils';
 
 const Discussions = () => {
   const { activeRepository, activeCategory } = useRepo();
@@ -62,7 +64,7 @@ const Discussions = () => {
               {activeCategory ? (
                 <div className="flex items-center gap-2">
                   <span className="text-2xl" role="img" aria-label={activeCategory.name}>
-                    {activeCategory.emoji}
+                    {convertEmojiText(activeCategory.emoji)}
                   </span>
                   <span>{activeCategory.name} Discussions</span>
                 </div>
