@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -26,7 +27,8 @@ import {
   Github,
   MessageSquare,
   Info,
-  Building2
+  Building2,
+  Copy
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -146,6 +148,16 @@ const Repositories = () => {
     }
   };
 
+  const copyToken = () => {
+    if (githubToken) {
+      navigator.clipboard.writeText(githubToken);
+      toast({
+        title: "Token Copied",
+        description: "GitHub token copied to clipboard"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -173,7 +185,18 @@ const Repositories = () => {
             <AlertDescription>
               {githubToken ? (
                 <div>
-                  <p>GitHub token available ✅</p>
+                  <div className="flex justify-between items-center">
+                    <p>GitHub token available ✅</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={copyToken}
+                      className="ml-2"
+                    >
+                      <Copy size={14} className="mr-1" />
+                      Copy Token
+                    </Button>
+                  </div>
                   <p className="text-xs mt-2">Token starts with: {githubToken.substring(0, 10)}...</p>
                   <p className="text-xs mt-1">Token length: {githubToken.length} characters</p>
                 </div>
