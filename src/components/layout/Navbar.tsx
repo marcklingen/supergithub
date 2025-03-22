@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,8 @@ import {
   UserCircle,
   LogOut,
   Settings,
-  User
+  User,
+  Lock
 } from 'lucide-react';
 import { 
   Avatar, 
@@ -33,11 +33,9 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   
-  // Get user avatar URL from GitHub user metadata
   const avatarUrl = user?.user_metadata?.avatar_url;
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.user_name || user?.email || 'User';
   
-  // Change navbar style on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -110,9 +108,13 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/account-settings')}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/account-settings')}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  <span>Account Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />

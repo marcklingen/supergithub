@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Repositories from "./pages/Repositories";
 import Discussions from "./pages/Discussions";
+import AccountSettings from "./pages/AccountSettings";
 import Layout from "./pages/Layout";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/repositories" element={<Repositories />} />
+              <Route path="/account-settings" element={<AccountSettings />} />
               
               {/* Routes with sidebar layout */}
               <Route path="/" element={<Layout />}>
