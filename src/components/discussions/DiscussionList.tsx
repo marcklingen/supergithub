@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepo } from '@/contexts/RepoContext';
-import { useAllRepositoryDiscussions } from '@/lib/github';
+import { useRepositoryDiscussions } from '@/lib/github';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   MessageCircle, 
@@ -36,11 +36,6 @@ interface Discussion {
   comments: {
     totalCount: number;
   };
-  category?: {
-    id: string;
-    name: string;
-    emoji: string;
-  };
   labels?: {
     nodes: {
       id: string;
@@ -52,7 +47,8 @@ interface Discussion {
 
 const DiscussionList = () => {
   const { user } = useAuth();
-  const { activeRepository } = useRepo();
+  const { activeRepository, activeCategory } = useRepo();
+  const [activeDiscussionId, setActiveDiscussionId] = useState<number | null>(null);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
@@ -67,10 +63,12 @@ const DiscussionList = () => {
     isError, 
     error,
     isFetching,
-  } = useAllRepositoryDiscussions(
+    refetch
+  } = useRepositoryDiscussions(
     activeRepository?.owner || '', 
     activeRepository?.name || '', 
-    20,
+    activeCategory?.id || '',
+    10,
     cursor,
     token
   );
@@ -124,12 +122,12 @@ const DiscussionList = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [allDiscussions, selectedIndex, navigate]);
   
-  // Reset state when repository changes
+  // Reset state when category changes
   useEffect(() => {
     setCursor(undefined);
     setAllDiscussions([]);
     setSelectedIndex(-1);
-  }, [activeRepository?.name]);
+  }, [activeCategory?.id, activeRepository?.name]);
   
   // Scroll selected item into view
   useEffect(() => {
@@ -187,12 +185,12 @@ const DiscussionList = () => {
     );
   }
   
-  if (allDiscussions.length === 0 && !isLoading) {
+  if (allDiscussions.length === 0) {
     return (
       <Card className="border bg-muted/30 text-center p-8">
         <h3 className="text-lg font-medium mb-2">No discussions found</h3>
         <p className="text-muted-foreground mb-4">
-          There are no discussions in this repository yet.
+          There are no discussions in this category yet.
         </p>
       </Card>
     );
@@ -201,7 +199,7 @@ const DiscussionList = () => {
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground mb-2">
-        {totalCount} {totalCount === 1 ? 'discussion' : 'discussions'} in this repository
+        {totalCount} {totalCount === 1 ? 'discussion' : 'discussions'} in this category
       </div>
       
       <div ref={listRef} className="space-y-2">
@@ -244,15 +242,6 @@ const DiscussionList = () => {
                       <ArrowUp size={14} />
                       <span>{discussion.upvoteCount}</span>
                     </div>
-                    
-                    {discussion.category && (
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className="bg-primary/10">
-                          <span className="mr-1">{discussion.category.emoji}</span>
-                          {discussion.category.name}
-                        </Badge>
-                      </div>
-                    )}
                   </div>
                   
                   {discussion.labels && discussion.labels.nodes.length > 0 && (

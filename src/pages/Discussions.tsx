@@ -8,7 +8,7 @@ import DiscussionList from '@/components/discussions/DiscussionList';
 import DiscussionDetail from '@/components/discussions/DiscussionDetail';
 
 const Discussions = () => {
-  const { activeRepository } = useRepo();
+  const { activeRepository, activeCategory } = useRepo();
   const { user } = useAuth();
   const { discussionNumber } = useParams<{ discussionNumber: string }>();
   
@@ -18,11 +18,23 @@ const Discussions = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              Discussions
+              {activeCategory ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" role="img" aria-label={activeCategory.name}>
+                    {activeCategory.emoji}
+                  </span>
+                  <span>{activeCategory.name} Discussions</span>
+                </div>
+              ) : (
+                "Discussions"
+              )}
             </h1>
             {activeRepository && (
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{activeRepository.fullName}</Badge>
+                {activeCategory?.description && (
+                  <p className="text-muted-foreground text-sm">{activeCategory.description}</p>
+                )}
               </div>
             )}
           </div>

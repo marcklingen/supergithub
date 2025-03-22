@@ -9,12 +9,25 @@ export interface Repository {
   url?: string;
 }
 
+export interface DiscussionCategory {
+  id: string;
+  name: string;
+  emoji: string;
+  description?: string;
+}
+
 interface RepoContextType {
   repositories: Repository[];
   addRepository: (ownerName: string) => void;
   removeRepository: (fullName: string) => void;
   activeRepository: Repository | null;
   setActiveRepository: (repo: Repository | null) => void;
+  categories: DiscussionCategory[];
+  setCategories: (categories: DiscussionCategory[]) => void;
+  activeCategory: DiscussionCategory | null;
+  setActiveCategory: (category: DiscussionCategory | null) => void;
+  isLoadingCategories: boolean;
+  setIsLoadingCategories: (isLoading: boolean) => void;
 }
 
 const RepoContext = createContext<RepoContextType | undefined>(undefined);
@@ -25,6 +38,9 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
     return stored ? JSON.parse(stored) : [];
   });
   const [activeRepository, setActiveRepository] = useState<Repository | null>(null);
+  const [categories, setCategories] = useState<DiscussionCategory[]>([]);
+  const [activeCategory, setActiveCategory] = useState<DiscussionCategory | null>(null);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const { user } = useAuth();
 
   // Load active repository from localStorage on initial render
@@ -48,6 +64,12 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
     } else {
       localStorage.removeItem('activeRepo');
     }
+  }, [activeRepository]);
+
+  // Clear active category when repository changes
+  useEffect(() => {
+    setActiveCategory(null);
+    setCategories([]);
   }, [activeRepository]);
 
   const addRepository = (ownerName: string) => {
@@ -92,7 +114,13 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
       addRepository,
       removeRepository,
       activeRepository,
-      setActiveRepository
+      setActiveRepository,
+      categories,
+      setCategories,
+      activeCategory,
+      setActiveCategory,
+      isLoadingCategories,
+      setIsLoadingCategories
     }}>
       {children}
     </RepoContext.Provider>
