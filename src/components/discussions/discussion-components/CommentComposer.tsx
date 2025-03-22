@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, AlertTriangle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddDiscussionComment } from '@/lib/github';
 import { toast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface CommentComposerProps {
   discussionId: string;
@@ -19,10 +20,11 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   discussionNumber,
   onCommentAdded
 }) => {
-  const { user, githubToken } = useAuth();
+  const { user, githubToken, setManualGithubToken } = useAuth();
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showTokenHelp, setShowTokenHelp] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const addComment = useAddDiscussionComment();
@@ -66,6 +68,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     
     setIsSubmitting(true);
     setErrorMessage(null);
+    setShowTokenHelp(false);
     
     // Extract user information safely
     const userDisplayName = user?.user_metadata?.user_name || 
@@ -125,8 +128,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       // Extract more helpful error message
       let errorMsg = "Your comment couldn't be posted, but it's saved as a draft";
       
-      if (error.message?.includes("Resource not accessible")) {
-        errorMsg = "The GitHub token doesn't have permission to post comments. Please check token permissions.";
+      if (error.message?.includes("Resource not accessible by integration") || 
+          error.message?.includes("permission")) {
+        errorMsg = "The GitHub token doesn't have permission to post comments. Please re-authenticate with the proper scopes.";
+        setShowTokenHelp(true);
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -141,6 +146,12 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReauth = () => {
+    // Redirect to auth page to get a new token with proper scopes
+    localStorage.removeItem('manual_github_token');
+    window.location.href = '/auth';
   };
   
   return (
@@ -162,10 +173,29 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
           />
           
           {errorMessage && (
-            <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 p-3 rounded border border-red-200 dark:border-red-900">
-              <p className="font-medium">Error: {errorMessage}</p>
-              <p className="mt-1 text-xs">Your comment was saved as a draft and will be available when you return.</p>
-            </div>
+            <Alert variant="destructive" className="mb-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error: {errorMessage}</AlertTitle>
+              <AlertDescription className="mt-1">
+                <p>Your comment was saved as a draft and will be available when you return.</p>
+                {showTokenHelp && (
+                  <div className="mt-2">
+                    <p>
+                      This is likely because your GitHub token doesn't have the necessary permissions.
+                      You need to re-authenticate with the proper scopes.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2" 
+                      onClick={handleReauth}
+                    >
+                      Re-authenticate with GitHub
+                    </Button>
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
           )}
           
           <div className="flex justify-between items-center">

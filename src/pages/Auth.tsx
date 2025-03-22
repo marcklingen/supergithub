@@ -83,12 +83,12 @@ const Auth = () => {
       setLoading(true);
       console.log('Initiating GitHub sign-in');
       
-      // Make sure to request the proper scopes for repository access
+      // Updated scopes to include write:discussion permission
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/auth`, // Explicitly redirect to the /auth route
-          scopes: 'repo read:user user:email discussion', // All needed scopes for accessing discussions
+          scopes: 'repo read:user user:email write:discussion', // Added write:discussion scope
         }
       });
 
