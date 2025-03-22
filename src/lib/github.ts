@@ -2,13 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
 
-// This would normally come from environment variables
-const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || '';
-
-if (!GITHUB_TOKEN) {
-  console.warn('GitHub token not provided. GitHub API functionality will be limited.');
-}
-
 async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   if (!token) {
     console.error('No GitHub token provided for GitHub API request');

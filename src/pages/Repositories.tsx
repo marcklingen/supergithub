@@ -37,19 +37,20 @@ import {
 const Repositories = () => {
   const [repoInput, setRepoInput] = useState('');
   const { repositories, addRepository, removeRepository, setActiveRepository } = useRepo();
-  const { user, githubToken } = useAuth();
+  const { user, githubToken, session } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(true);
   
   useEffect(() => {
     console.log("GitHub token available:", !!githubToken);
+    console.log("Full session object:", JSON.stringify(session, null, 2));
     if (!githubToken) {
       console.log("User metadata:", user?.user_metadata);
       console.log("App metadata:", user?.app_metadata);
     }
-  }, [githubToken, user]);
+  }, [githubToken, user, session]);
   
   const { 
     data: githubRepos, 
@@ -148,11 +149,14 @@ const Repositories = () => {
                 <div>
                   <p>GitHub token available ✅</p>
                   <p className="text-xs mt-2">Token starts with: {githubToken.substring(0, 10)}...</p>
+                  <p className="text-xs mt-1">Token length: {githubToken.length} characters</p>
                 </div>
               ) : (
                 <div>
                   <p>GitHub token missing ❌</p>
                   <p className="text-xs mt-2">Authentication provider: {user?.app_metadata?.provider || 'Not found'}</p>
+                  <p className="text-xs mt-1">Session available: {session ? 'Yes' : 'No'}</p>
+                  {session && <p className="text-xs mt-1">Session has provider_token: {session.provider_token ? 'Yes' : 'No'}</p>}
                   <div className="mt-4">
                     <Button 
                       size="sm" 
