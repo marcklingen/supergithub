@@ -205,6 +205,7 @@ const DiscussionDetail = () => {
                 >
                   <ArrowUp className="h-4 w-4" />
                   <span className="sr-only">Previous discussion</span>
+                  <kbd className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">k</kbd>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -224,6 +225,7 @@ const DiscussionDetail = () => {
                 >
                   <ArrowDown className="h-4 w-4" />
                   <span className="sr-only">Next discussion</span>
+                  <kbd className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">j</kbd>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -240,6 +242,7 @@ const DiscussionDetail = () => {
             <a href={`https://github.com/${activeRepository?.owner}/${activeRepository?.name}/discussions/${discussion.number}`} target="_blank" rel="noopener noreferrer">
               <Github size={14} className="mr-1.5" />
               Open on GitHub
+              <kbd className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">o</kbd>
             </a>
           </Button>
         </div>

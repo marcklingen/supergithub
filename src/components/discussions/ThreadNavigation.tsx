@@ -68,6 +68,12 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
             navigateTo(nextDiscussion);
           }
           break;
+        case 'o':
+          e.preventDefault();
+          if (activeRepository) {
+            window.open(`https://github.com/${activeRepository.owner}/${activeRepository.name}/discussions/${currentDiscussionNumber}`, '_blank');
+          }
+          break;
         default:
           break;
       }
@@ -75,7 +81,7 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [prevDiscussion, nextDiscussion]);
+  }, [prevDiscussion, nextDiscussion, activeRepository, currentDiscussionNumber]);
   
   return (
     <div className="fixed bottom-8 right-8 flex flex-col gap-2 z-10">
@@ -90,6 +96,7 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
               className="rounded-full shadow-md"
             >
               <ArrowUp className="h-4 w-4" />
+              <span className="sr-only">Previous (k)</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
@@ -107,6 +114,7 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
               className="rounded-full shadow-md"
             >
               <ArrowDown className="h-4 w-4" />
+              <span className="sr-only">Next (j)</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
