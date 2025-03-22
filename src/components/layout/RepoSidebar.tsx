@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRepo, DiscussionCategory } from '@/contexts/RepoContext';
@@ -12,18 +13,6 @@ import {
   User,
   LogOut
 } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter
-} from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -104,11 +93,11 @@ const RepoSidebar = () => {
   };
   
   if (!user) {
-    return <Sidebar className="border-r" collapsible="none">
-      <SidebarHeader className="p-4">
-        <h3 className="text-lg font-semibold">SuperGitHub</h3>
-      </SidebarHeader>
-      <SidebarContent>
+    return (
+      <div className="w-64 h-screen border-r bg-sidebar">
+        <div className="p-4 border-b">
+          <h3 className="text-lg font-semibold">SuperGitHub</h3>
+        </div>
         <div className="p-4">
           <p>Please sign in to continue</p>
           <Button 
@@ -118,16 +107,16 @@ const RepoSidebar = () => {
             Sign In
           </Button>
         </div>
-      </SidebarContent>
-    </Sidebar>;
+      </div>
+    );
   }
   
   if (repositories.length === 0) {
-    return <Sidebar className="border-r" collapsible="none">
-      <SidebarHeader className="p-4">
-        <h3 className="text-lg font-semibold">SuperGitHub</h3>
-      </SidebarHeader>
-      <SidebarContent>
+    return (
+      <div className="w-64 h-screen border-r bg-sidebar">
+        <div className="p-4 border-b">
+          <h3 className="text-lg font-semibold">SuperGitHub</h3>
+        </div>
         <div className="p-4">
           <p>No repositories connected</p>
           <Button 
@@ -137,64 +126,64 @@ const RepoSidebar = () => {
             Connect Repository
           </Button>
         </div>
-      </SidebarContent>
-    </Sidebar>;
+      </div>
+    );
   }
   
   return (
-    <Sidebar className="border-r" collapsible="none">
-      <SidebarHeader className="p-4 border-b">
+    <div className="w-64 h-screen border-r bg-sidebar text-sidebar-foreground flex flex-col">
+      <div className="p-4 border-b">
         <Link to="/" className="text-lg font-semibold hover:text-primary transition-colors">
           SuperGitHub
         </Link>
-      </SidebarHeader>
+      </div>
       
-      <SidebarContent>
-        <SidebarGroup>
-          <div className="p-4 flex items-center justify-between">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  <div className="flex items-center gap-2 truncate">
-                    <Github size={16} />
-                    <span className="truncate">
-                      {activeRepository?.fullName || 'Select Repository'}
-                    </span>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>Your Repositories</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <ScrollArea className="h-[300px]">
-                  {repositories.map((repo) => (
-                    <DropdownMenuItem 
-                      key={repo.fullName}
-                      onClick={() => handleRepoChange(repo)}
-                      className={activeRepository?.fullName === repo.fullName ? 'bg-accent' : ''}
-                    >
-                      <div className="flex items-center gap-2 w-full truncate">
-                        <FolderKanban size={16} />
-                        <span className="truncate">{repo.fullName}</span>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollArea>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/repositories')}>
-                  <div className="flex items-center gap-2 w-full">
-                    <FolderKanban size={16} />
-                    <span>Manage Repositories</span>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </SidebarGroup>
+      <div className="flex-1 overflow-auto">
+        <div className="p-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                <div className="flex items-center gap-2 truncate">
+                  <Github size={16} />
+                  <span className="truncate">
+                    {activeRepository?.fullName || 'Select Repository'}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Your Repositories</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <ScrollArea className="h-[300px]">
+                {repositories.map((repo) => (
+                  <DropdownMenuItem 
+                    key={repo.fullName}
+                    onClick={() => handleRepoChange(repo)}
+                    className={activeRepository?.fullName === repo.fullName ? 'bg-accent' : ''}
+                  >
+                    <div className="flex items-center gap-2 w-full truncate">
+                      <FolderKanban size={16} />
+                      <span className="truncate">{repo.fullName}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </ScrollArea>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/repositories')}>
+                <div className="flex items-center gap-2 w-full">
+                  <FolderKanban size={16} />
+                  <span>Manage Repositories</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-4">Discussion Categories</SidebarGroupLabel>
-          <SidebarGroupContent>
+        <div className="px-4 pt-4">
+          <h4 className="text-xs font-medium text-sidebar-foreground/70 px-2 h-8 flex items-center">
+            Discussion Categories
+          </h4>
+          <div className="mt-1">
             {isLoading ? (
               <div className="p-4 flex justify-center">
                 <Loader2 className="animate-spin text-muted-foreground" />
@@ -220,62 +209,63 @@ const RepoSidebar = () => {
                 No discussion categories found. Check if discussions are properly configured.
               </div>
             ) : (
-              <SidebarMenu>
+              <ul className="space-y-1">
                 {data?.repository?.discussionCategories?.nodes?.map((category: any) => (
-                  <SidebarMenuItem key={category.id}>
-                    <SidebarMenuButton 
+                  <li key={category.id}>
+                    <button 
                       onClick={() => handleCategoryClick({
                         id: category.id,
                         name: category.name,
                         emoji: category.emoji,
                         description: category.description
                       })}
-                      className={
-                        activeCategory?.id === category.id ? 
-                        'bg-accent text-accent-foreground' : ''
-                      }
+                      className={`
+                        flex items-center gap-2 w-full rounded-md p-2 text-sm
+                        ${activeCategory?.id === category.id ? 
+                          'bg-accent text-accent-foreground' : 
+                          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
+                      `}
                     >
-                      <div className="flex items-center gap-2 w-full">
-                        <span className="text-base" role="img" aria-label={category.name}>
-                          {category.emoji}
-                        </span>
-                        <span>{category.name}</span>
-                      </div>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <span className="text-base" role="img" aria-label={category.name}>
+                        {category.emoji}
+                      </span>
+                      <span>{category.name}</span>
+                    </button>
+                  </li>
                 ))}
-              </SidebarMenu>
+              </ul>
             )}
-          </SidebarGroupContent>
-        </SidebarGroup>
+          </div>
+        </div>
         
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-4">Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/repositories" className="flex items-center gap-2">
-                    <FolderKanban size={16} />
-                    <span>Repositories</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/discussions" className="flex items-center gap-2">
-                    <MessageSquare size={16} />
-                    <span>Discussions</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        <div className="px-4 pt-6">
+          <h4 className="text-xs font-medium text-sidebar-foreground/70 px-2 h-8 flex items-center">
+            Navigation
+          </h4>
+          <ul className="space-y-1 mt-1">
+            <li>
+              <Link 
+                to="/repositories" 
+                className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <FolderKanban size={16} />
+                <span>Repositories</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/discussions" 
+                className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <MessageSquare size={16} />
+                <span>Discussions</span>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
       
-      <SidebarFooter className="p-4 border-t mt-auto">
+      <div className="p-4 border-t mt-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full flex items-center justify-start gap-2 h-auto py-2">
@@ -307,8 +297,8 @@ const RepoSidebar = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </div>
   );
 };
 
