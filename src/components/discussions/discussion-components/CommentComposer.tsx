@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, Send, AlertTriangle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +28,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   
   const addComment = useAddDiscussionComment();
   
-  // Load draft from localStorage on component mount
   useEffect(() => {
     const draftKey = `discussion-${discussionNumber}-draft`;
     const savedDraft = localStorage.getItem(draftKey);
@@ -38,7 +36,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     }
   }, [discussionNumber]);
   
-  // Save draft to localStorage when comment changes (debounced)
   useEffect(() => {
     const draftKey = `discussion-${discussionNumber}-draft`;
     const debounceTimer = setTimeout(() => {
@@ -50,7 +47,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     return () => clearTimeout(debounceTimer);
   }, [comment, discussionNumber]);
   
-  // Handle keyboard shortcuts (Cmd+Enter to submit)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && textareaRef.current === document.activeElement) {
@@ -70,7 +66,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     setErrorMessage(null);
     setShowTokenHelp(false);
     
-    // Extract user information safely
     const userDisplayName = user?.user_metadata?.user_name || 
                             user?.user_metadata?.full_name || 
                             user?.email?.split('@')[0] || 
@@ -81,7 +76,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                             `https://github.com/${user.user_metadata.provider_id}` : 
                             '#';
     
-    // Prepare optimistic comment
     const optimisticComment = {
       id: `optimistic-${Date.now()}`,
       bodyHTML: comment.replace(/\n/g, '<br>'),
@@ -96,11 +90,9 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       reactions: { nodes: [] }
     };
     
-    // Optimistically update UI
     onCommentAdded(optimisticComment);
     
     try {
-      // Send to GitHub API
       const result = await addComment.mutateAsync({
         discussionId,
         body: comment,
@@ -109,12 +101,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       
       console.log("Comment API response:", result);
       
-      // Clear draft on success
       const draftKey = `discussion-${discussionNumber}-draft`;
       localStorage.removeItem(draftKey);
       setComment('');
       
-      // Update with real comment from API
       const realComment = result?.addDiscussionComment?.comment;
       if (realComment) {
         onCommentAdded(realComment);
@@ -129,11 +119,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     } catch (error: any) {
       console.error('Error posting comment:', error);
       
-      // Extract more helpful error message
       let errorMsg = "Your comment couldn't be posted, but it's saved as a draft";
       
       if (error.message?.includes("Resource not accessible by integration")) {
-        errorMsg = "The GitHub token doesn't have permission to post comments. You need a token with 'repo' and 'write:discussion' scopes.";
+        errorMsg = "The GitHub token doesn't have permission to post comments. You need a token with 'repo', 'write:discussion', and possibly 'write:issue' scopes.";
         setShowTokenHelp(true);
       } else if (error.message?.includes("FORBIDDEN")) {
         errorMsg = "GitHub API returned a FORBIDDEN error. Your token lacks the required permissions.";
@@ -155,7 +144,6 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   };
 
   const handleReauth = () => {
-    // Redirect to auth page to get a new token with proper scopes
     localStorage.removeItem('manual_github_token');
     window.location.href = '/auth';
   };
@@ -192,7 +180,8 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                     </p>
                     <ul className="list-disc ml-5 my-2 text-sm">
                       <li>The <code className="bg-background/30 px-1 rounded">repo</code> scope for access to repositories</li>
-                      <li>The <code className="bg-background/30 px-1 rounded">write:discussion</code> scope for adding comments</li>
+                      <li>The <code className="bg-background/30 px-1 rounded">write:discussion</code> scope for discussions</li>
+                      <li>The <code className="bg-background/30 px-1 rounded">write:issue</code> scope may also be needed</li>
                     </ul>
                     <Button 
                       variant="outline" 
