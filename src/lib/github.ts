@@ -36,7 +36,11 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
       
       // Check if the error is related to organization access (missing read:org scope)
       const isOrgAccessError = responseData.errors.some((e: any) => 
-        e.message && e.message.includes("'login' field requires") && e.message.includes("'read:org'")
+        e.message && (
+          (e.message.includes("'login' field requires") && e.message.includes("'read:org'")) ||
+          e.message.includes("Resource not accessible by integration") ||
+          e.message.includes("Not previously an organization member")
+        )
       );
       
       if (isOrgAccessError && responseData.data && responseData.data.viewer) {
@@ -118,7 +122,11 @@ export function useUserRepositories(token?: string | null) {
         return await fetchGitHubAPI(query, {}, token);
       } catch (error: any) {
         // If the error is specifically about organization access, fallback to just personal repos
-        if (error.message && error.message.includes("'login' field requires") && error.message.includes("'read:org'")) {
+        if (error.message && (
+          (error.message.includes("'login' field requires") && error.message.includes("'read:org'")) ||
+          error.message.includes("Resource not accessible by integration") ||
+          error.message.includes("Not previously an organization member")
+        )) {
           console.warn('Falling back to personal repositories only due to missing read:org scope');
           
           // Fallback query without organizations

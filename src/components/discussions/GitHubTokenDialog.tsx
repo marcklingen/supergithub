@@ -75,6 +75,15 @@ const GitHubTokenDialog = ({
                 <li>Click "Generate token" and copy the generated token</li>
               </ol>
             </div>
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-200 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-400 text-sm font-medium mb-1">Important:</p>
+              <p className="text-sm text-amber-700 dark:text-amber-500">
+                Select the full <code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">repo</code> scope checkbox, not just the individual permissions. This grants access to both public and private repositories.
+              </p>
+              <p className="text-sm mt-2 text-amber-700 dark:text-amber-500">
+                Add <code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">read:org</code> scope if you want to access and manage discussions in organization repositories.
+              </p>
+            </div>
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
