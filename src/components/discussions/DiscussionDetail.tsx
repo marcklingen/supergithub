@@ -27,6 +27,7 @@ const DiscussionDetail = () => {
     isLoading,
     isError,
     error,
+    refetch
   } = useDiscussionDetails(
     activeRepository?.owner || '',
     activeRepository?.name || '',
@@ -69,7 +70,9 @@ const DiscussionDetail = () => {
     navigate('/discussions');
   };
   
-  const handleAddComment = (newComment: any) => {
+  const handleAddComment = async (newComment: any) => {
+    console.log("Adding comment to discussion:", newComment);
+    
     // If this is an optimistic comment, add it to our local state
     if (newComment.isOptimistic) {
       setOptimisticComments(prev => {
@@ -82,6 +85,11 @@ const DiscussionDetail = () => {
       setOptimisticComments(prev => 
         prev.filter(c => c.id !== 'optimistic-' + newComment.id)
       );
+      
+      // Refetch the discussion to get the latest comments
+      setTimeout(() => {
+        refetch();
+      }, 1000);
     }
   };
   

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -385,8 +386,8 @@ export function useAddDiscussionComment() {
       }
 
       const query = `
-        mutation AddDiscussionComment($discussionId: ID!, $body: String!) {
-          addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
+        mutation AddDiscussionComment($input: AddDiscussionCommentInput!) {
+          addDiscussionComment(input: $input) {
             comment {
               id
               author {
@@ -397,13 +398,27 @@ export function useAddDiscussionComment() {
               bodyHTML
               createdAt
               upvoteCount
+              reactions(first: 10) {
+                nodes {
+                  content
+                }
+              }
             }
           }
         }
       `;
 
-      console.log('Adding comment to discussion:', discussionId);
-      return fetchGitHubAPI(query, { discussionId, body }, token);
+      const variables = {
+        input: {
+          discussionId,
+          body,
+        }
+      };
+
+      console.log('Adding comment to discussion with ID:', discussionId);
+      console.log('Variables being sent:', JSON.stringify(variables, null, 2));
+      
+      return fetchGitHubAPI(query, variables, token);
     }
   });
 }

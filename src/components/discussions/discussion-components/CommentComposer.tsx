@@ -107,6 +107,8 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
         token: githubToken
       });
       
+      console.log("Comment API response:", result);
+      
       // Clear draft on success
       const draftKey = `discussion-${discussionNumber}-draft`;
       localStorage.removeItem(draftKey);
@@ -116,21 +118,25 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       const realComment = result?.addDiscussionComment?.comment;
       if (realComment) {
         onCommentAdded(realComment);
+        
+        toast({
+          title: "Comment posted",
+          description: "Your comment has been successfully posted"
+        });
+      } else {
+        throw new Error("Invalid response format from GitHub API");
       }
-      
-      toast({
-        title: "Comment posted",
-        description: "Your comment has been successfully posted"
-      });
     } catch (error: any) {
       console.error('Error posting comment:', error);
       
       // Extract more helpful error message
       let errorMsg = "Your comment couldn't be posted, but it's saved as a draft";
       
-      if (error.message?.includes("Resource not accessible by integration") || 
-          error.message?.includes("permission")) {
-        errorMsg = "The GitHub token doesn't have permission to post comments. Please re-authenticate with the proper scopes.";
+      if (error.message?.includes("Resource not accessible by integration")) {
+        errorMsg = "The GitHub token doesn't have permission to post comments. You need a token with 'repo' and 'write:discussion' scopes.";
+        setShowTokenHelp(true);
+      } else if (error.message?.includes("FORBIDDEN")) {
+        errorMsg = "GitHub API returned a FORBIDDEN error. Your token lacks the required permissions.";
         setShowTokenHelp(true);
       } else if (error.message) {
         errorMsg = error.message;
@@ -182,8 +188,12 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                   <div className="mt-2">
                     <p>
                       This is likely because your GitHub token doesn't have the necessary permissions.
-                      You need to re-authenticate with the proper scopes.
+                      You need to re-authenticate with GitHub to get a token with proper scopes:
                     </p>
+                    <ul className="list-disc ml-5 my-2 text-sm">
+                      <li>The <code className="bg-background/30 px-1 rounded">repo</code> scope for access to repositories</li>
+                      <li>The <code className="bg-background/30 px-1 rounded">write:discussion</code> scope for adding comments</li>
+                    </ul>
                     <Button 
                       variant="outline" 
                       size="sm" 
