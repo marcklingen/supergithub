@@ -37,7 +37,7 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments, onReplyCli
           </p>
         </Card>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {topLevelComments.map((comment: any) => (
             <ThreadedComment 
               key={comment.id} 
