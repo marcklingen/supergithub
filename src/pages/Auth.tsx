@@ -82,7 +82,7 @@ const Auth = () => {
         provider: 'github',
         options: {
           redirectTo: window.location.origin + '/auth', // Explicitly redirect to the /auth route
-          scopes: 'repo read:user user:email', // Request repo scope for accessing private repos
+          scopes: 'repo read:user user:email discussion', // Add discussion scope for accessing discussions
         }
       });
 

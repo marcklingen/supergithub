@@ -19,19 +19,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [githubToken, setGithubToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Function to extract GitHub token from user session
+  // Improved function to extract GitHub token from user session
   const extractGitHubToken = (session: Session | null) => {
     if (!session?.user) return null;
     
-    // Check for GitHub provider token in user metadata
-    const providerToken = session.user.app_metadata?.provider_token;
+    console.log("Extracting GitHub token from session...");
     
-    // If we don't have a provider token, check for it in user_metadata
-    if (!providerToken && session.user.user_metadata?.provider === 'github') {
-      return session.user.user_metadata?.access_token || null;
+    // Check for provider token in app_metadata
+    const providerToken = session.user.app_metadata?.provider_token;
+    if (providerToken) {
+      console.log("Found token in app_metadata.provider_token");
+      return providerToken;
     }
     
-    return providerToken || null;
+    // Check in user_metadata for GitHub provider
+    if (session.user.user_metadata?.provider === 'github' && 
+        session.user.user_metadata?.access_token) {
+      console.log("Found token in user_metadata.access_token");
+      return session.user.user_metadata.access_token;
+    }
+    
+    // Check directly in app_metadata for legacy structure
+    if (session.user.app_metadata?.provider === 'github' && 
+        session.user.app_metadata?.access_token) {
+      console.log("Found token in app_metadata.access_token");
+      return session.user.app_metadata.access_token;
+    }
+    
+    console.log("No GitHub token found in session");
+    console.log("User metadata:", session.user.user_metadata);
+    console.log("App metadata:", session.user.app_metadata);
+    
+    return null;
   };
 
   useEffect(() => {
@@ -40,7 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (_, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setGithubToken(extractGitHubToken(session));
+        const token = extractGitHubToken(session);
+        setGithubToken(token);
+        console.log("Auth state changed, token available:", !!token);
         setLoading(false);
       }
     );
@@ -49,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setGithubToken(extractGitHubToken(session));
+      const token = extractGitHubToken(session);
+      setGithubToken(token);
+      console.log("Initial session check, token available:", !!token);
       setLoading(false);
     });
 

@@ -10,14 +10,13 @@ if (!GITHUB_TOKEN) {
 }
 
 async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
-  const authToken = token || GITHUB_TOKEN;
-  
-  if (!authToken) {
+  if (!token) {
+    console.error('No GitHub token provided for GitHub API request');
     throw new Error('GitHub token is required for this operation');
   }
   
-  console.log(`Fetching GitHub API with token: ${authToken ? 'Token provided' : 'No token'}`);
-  console.log('GitHub token length:', authToken.length);
+  console.log(`Fetching GitHub API with token available: ${token ? 'Yes' : 'No'}`);
+  console.log('GitHub token length:', token.length);
   console.log('Query:', query);
   console.log('Variables:', variables);
   
@@ -26,18 +25,19 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ query, variables }),
     });
 
-    const responseData = await response.json();
-    
     if (!response.ok) {
-      console.error('GitHub API error response:', responseData);
+      const text = await response.text();
+      console.error('GitHub API error response:', text);
       throw new Error(`GitHub API error: ${response.statusText} (${response.status})`);
     }
 
+    const responseData = await response.json();
+    
     if (responseData.errors) {
       console.error('GitHub GraphQL errors:', responseData.errors);
       throw new Error(responseData.errors.map((e: any) => e.message).join('\n'));
@@ -51,7 +51,7 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
 }
 
 // Query hook for user's repositories
-export function useUserRepositories(token?: string) {
+export function useUserRepositories(token?: string | null) {
   return useQuery({
     queryKey: ['userRepositories', token],
     queryFn: async () => {
