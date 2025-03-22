@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import DiscussionList from '@/components/discussions/DiscussionList';
 import DiscussionDetail from '@/components/discussions/DiscussionDetail';
+import { AlertTriangle } from 'lucide-react';
 
 const Discussions = () => {
   const { activeRepository, activeCategory } = useRepo();
@@ -49,6 +50,10 @@ const Discussions = () => {
       title: "Token Set",
       description: "GitHub token has been set successfully",
     });
+  };
+
+  const handleNavigateToRepositories = () => {
+    navigate('/repositories');
   };
   
   return (
@@ -132,12 +137,38 @@ const Discussions = () => {
           </div>
         ) : (
           <>
-            {!activeRepository || !activeCategory ? (
+            {!activeRepository ? (
               <div className="bg-muted p-6 rounded-lg text-center">
-                <h3 className="text-lg font-medium mb-4">Select a Repository and Category</h3>
-                <p className="text-muted-foreground">
-                  Please select a repository and discussion category from the sidebar to view discussions.
+                <h3 className="text-lg font-medium mb-4">Select a Repository</h3>
+                <p className="text-muted-foreground mb-4">
+                  Please select a repository from the sidebar to view discussions.
                 </p>
+                <Button onClick={handleNavigateToRepositories}>
+                  Manage Repositories
+                </Button>
+              </div>
+            ) : !activeCategory ? (
+              <div className="bg-muted p-6 rounded-lg">
+                <div className="flex items-start gap-3 mb-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+                  <h3 className="text-lg font-medium">No Discussion Category Selected</h3>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  It looks like you don't have any discussion categories available for this repository. This could be due to:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground mb-6">
+                  <li>Discussions are not enabled for this repository</li>
+                  <li>Your GitHub token doesn't have sufficient permissions (needs <code className="bg-accent px-1 py-0.5 rounded">repo</code> scope)</li>
+                  <li>No discussion categories have been created yet in the repository settings</li>
+                </ul>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button variant="outline" onClick={() => navigate('/repositories')}>
+                    Choose Another Repository
+                  </Button>
+                  <Button onClick={() => setShowTokenModal(true)}>
+                    Update GitHub Token
+                  </Button>
+                </div>
               </div>
             ) : discussionNumber ? (
               <DiscussionDetail />

@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   User,
   LogOut,
-  Copy
+  Copy,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -32,11 +33,11 @@ import { useToast } from '@/hooks/use-toast';
 
 const RepoSidebar = () => {
   const { activeRepository, repositories, setActiveRepository, setActiveCategory, activeCategory } = useRepo();
-  const { user, signOut } = useAuth();
+  const { user, signOut, githubToken } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const token = user?.user_metadata?.provider_token;
+  const token = githubToken || user?.user_metadata?.provider_token;
   const avatarUrl = user?.user_metadata?.avatar_url;
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.user_name || user?.email || 'User';
   
@@ -44,7 +45,8 @@ const RepoSidebar = () => {
     data, 
     isLoading, 
     isError, 
-    error 
+    error,
+    refetch
   } = useRepositoryDiscussionCategories(
     activeRepository?.owner || '', 
     activeRepository?.name || '', 
@@ -90,6 +92,14 @@ const RepoSidebar = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleRefreshCategories = () => {
+    refetch();
+    toast({
+      title: "Refreshing categories",
+      description: "Attempting to reload discussion categories"
+    });
   };
 
   const handleCopyToken = () => {
@@ -196,9 +206,23 @@ const RepoSidebar = () => {
         </div>
         
         <div className="px-4 pt-4">
-          <h4 className="text-xs font-medium text-sidebar-foreground/70 px-2 h-8 flex items-center">
-            Discussion Categories
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-medium text-sidebar-foreground/70 px-2 h-8 flex items-center">
+              Discussion Categories
+            </h4>
+            {activeRepository && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6"
+                onClick={handleRefreshCategories}
+                disabled={isLoading}
+                title="Refresh categories"
+              >
+                <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+              </Button>
+            )}
+          </div>
           <div className="mt-1">
             {isLoading ? (
               <div className="p-4 flex justify-center">
@@ -213,14 +237,26 @@ const RepoSidebar = () => {
                     <p className="text-xs mt-1 text-destructive/80">
                       {(error as Error)?.message || 'Check if discussions are enabled for this repository'}
                     </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2 h-7 text-xs w-full"
+                      onClick={handleRefreshCategories}
+                    >
+                      Try Again
+                    </Button>
                   </div>
                 </div>
+              </div>
+            ) : !activeRepository ? (
+              <div className="p-4 text-sm text-muted-foreground">
+                Select a repository to view discussion categories.
               </div>
             ) : data?.repository?.hasDiscussionsEnabled === false ? (
               <div className="p-4 text-sm text-muted-foreground">
                 Discussions are not enabled for this repository.
               </div>
-            ) : data?.repository?.discussionCategories?.nodes?.length === 0 ? (
+            ) : !data?.repository?.discussionCategories?.nodes?.length ? (
               <div className="p-4 text-sm text-muted-foreground">
                 No discussion categories found. Check if discussions are properly configured.
               </div>
@@ -245,7 +281,7 @@ const RepoSidebar = () => {
                       <span className="text-base" role="img" aria-label={category.name}>
                         {category.emoji}
                       </span>
-                      <span>{category.name}</span>
+                      <span className="truncate">{category.name}</span>
                     </button>
                   </li>
                 ))}
