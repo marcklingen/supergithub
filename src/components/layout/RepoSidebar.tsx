@@ -290,7 +290,7 @@ const RepoSidebar = () => {
                         <span className="truncate">{category.name}</span>
                       </div>
                       {index < 9 && (
-                        <CommandShortcut className="text-xs">{modKey}{index + 1}</CommandShortcut>
+                        <CommandShortcut className="text-xs">{index + 1}</CommandShortcut>
                       )}
                     </button>
                   </li>

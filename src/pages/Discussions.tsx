@@ -42,7 +42,8 @@ const Discussions = () => {
         return;
       }
       
-      if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '9') {
+      // Changed from requiring meta/ctrl key to just number keys
+      if (e.key >= '1' && e.key <= '9') {
         const numericIndex = parseInt(e.key) - 1;
         if (numericIndex >= 0 && numericIndex < categories.length) {
           e.preventDefault();
