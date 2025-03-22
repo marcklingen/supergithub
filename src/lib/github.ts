@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -44,7 +43,7 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   }
 }
 
-// Query hook for user's repositories
+// Updated query hook for user's repositories that includes both personal repositories and those in organizations
 export function useUserRepositories(token?: string | null) {
   return useQuery({
     queryKey: ['userRepositories', token],
@@ -55,6 +54,7 @@ export function useUserRepositories(token?: string | null) {
         throw new Error('GitHub token is required to fetch repositories');
       }
       
+      // Updated query to include both personal repositories and those in organizations
       const query = `
         query GetUserRepositories {
           viewer {
@@ -75,16 +75,62 @@ export function useUserRepositories(token?: string | null) {
                 isPrivate
               }
             }
+            organizations(first: 100) {
+              nodes {
+                login
+                repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+                  nodes {
+                    name
+                    nameWithOwner
+                    owner {
+                      login
+                    }
+                    description
+                    url
+                    stargazerCount
+                    forkCount
+                    hasDiscussionsEnabled
+                    isPrivate
+                  }
+                }
+              }
+            }
           }
         }
       `;
       
-      console.log('Fetching user repositories with token:', token ? 'Token available' : 'No token');
+      console.log('Fetching user repositories (including organization repos) with token:', token ? 'Token available' : 'No token');
       return fetchGitHubAPI(query, {}, token);
     },
     enabled: Boolean(token),
     retry: 1,
     retryDelay: 1000,
+  });
+}
+
+// Query hook for repository discussion categories
+export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string | null) {
+  return useQuery({
+    queryKey: ['repositoryDiscussionCategories', owner, name, token],
+    queryFn: async () => {
+      const query = `
+        query GetRepositoryDiscussionCategories($owner: String!, $name: String!) {
+          repository(owner: $owner, name: $name) {
+            discussionCategories(first: 25) {
+              nodes {
+                id
+                name
+                emoji
+                description
+              }
+            }
+          }
+        }
+      `;
+      
+      return fetchGitHubAPI(query, { owner, name }, token);
+    },
+    enabled: Boolean(owner) && Boolean(name) && Boolean(token),
   });
 }
 
@@ -117,32 +163,6 @@ export function useGitHubUserProfile(username: string, token?: string | null) {
       return fetchGitHubAPI(query, { username }, token);
     },
     enabled: Boolean(username) && Boolean(token),
-  });
-}
-
-// Query hook for repository discussion categories
-export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string | null) {
-  return useQuery({
-    queryKey: ['repositoryDiscussionCategories', owner, name, token],
-    queryFn: async () => {
-      const query = `
-        query GetRepositoryDiscussionCategories($owner: String!, $name: String!) {
-          repository(owner: $owner, name: $name) {
-            discussionCategories(first: 25) {
-              nodes {
-                id
-                name
-                emoji
-                description
-              }
-            }
-          }
-        }
-      `;
-      
-      return fetchGitHubAPI(query, { owner, name }, token);
-    },
-    enabled: Boolean(owner) && Boolean(name) && Boolean(token),
   });
 }
 
