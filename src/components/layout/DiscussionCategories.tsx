@@ -42,8 +42,9 @@ const DiscussionCategories: React.FC = () => {
         description: firstCategory.description
       });
       
-      // Only navigate to discussions if we're not already there or in a specific discussion
-      if (!location.pathname.includes('/discussions')) {
+      // Only navigate to discussions if we're not in the repositories page
+      // This prevents automatic redirection from repositories to discussions
+      if (!location.pathname.includes('/discussions') && !location.pathname.includes('/repositories')) {
         navigate('/discussions');
       }
     }
