@@ -8,12 +8,13 @@ import {
   FolderKanban,
   MessageSquare,
   BookOpen,
-  Tag,
-  PlusCircle,
   ChevronRight, 
   Github,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  User,
+  LogOut,
+  Settings
 } from 'lucide-react';
 import {
   Sidebar,
@@ -26,6 +27,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
+  SidebarFooter
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -36,17 +38,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
+import { 
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage 
+} from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 
 const RepoSidebar = () => {
   const { activeRepository, repositories, setActiveRepository, setActiveCategory, activeCategory } = useRepo();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const token = user?.user_metadata?.provider_token;
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.user_name || user?.email || 'User';
   
   const { 
     data, 
@@ -93,6 +101,11 @@ const RepoSidebar = () => {
   const handleCategoryClick = (category: DiscussionCategory) => {
     setActiveCategory(category);
     navigate('/discussions');
+  };
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
   
   if (!user) {
@@ -177,8 +190,8 @@ const RepoSidebar = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/repositories')}>
                   <div className="flex items-center gap-2 w-full">
-                    <PlusCircle size={16} />
-                    <span>Add Repository</span>
+                    <FolderKanban size={16} />
+                    <span>Manage Repositories</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -246,12 +259,12 @@ const RepoSidebar = () => {
         <SidebarGroup>
           <SidebarGroupLabel className="px-4">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu>              
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/" className="flex items-center gap-2">
-                    <BookOpen size={16} />
-                    <span>Home</span>
+                  <Link to="/repositories" className="flex items-center gap-2">
+                    <FolderKanban size={16} />
+                    <span>Repositories</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -264,19 +277,45 @@ const RepoSidebar = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/repositories" className="flex items-center gap-2">
-                    <FolderKanban size={16} />
-                    <span>Repositories</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      {/* User avatar menu in footer */}
+      <SidebarFooter className="p-4 border-t mt-auto">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full flex items-center justify-start gap-2 h-auto py-2">
+              <Avatar className="h-8 w-8 border border-border">
+                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarFallback>
+                  {userName.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col items-start text-sm">
+                <span className="font-medium truncate max-w-[150px]">{userName}</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user?.email}</span>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/account-settings')}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Account Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive focus:text-destructive"
+              onClick={handleSignOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 };
