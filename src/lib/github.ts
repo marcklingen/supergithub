@@ -10,13 +10,19 @@ if (!GITHUB_TOKEN) {
   console.warn('GitHub token not provided. GitHub API functionality will be limited.');
 }
 
-async function fetchGitHubAPI(query: string, variables = {}) {
+async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
+  const authToken = token || GITHUB_TOKEN;
+  
+  if (!authToken) {
+    throw new Error('GitHub token is required for this operation');
+  }
+  
   try {
     const response = await fetch(GITHUB_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({ query, variables }),
     });
@@ -39,7 +45,7 @@ async function fetchGitHubAPI(query: string, variables = {}) {
 }
 
 // Example query hook for user profile
-export function useGitHubUserProfile(username: string) {
+export function useGitHubUserProfile(username: string, token?: string) {
   return useQuery({
     queryKey: ['githubUser', username],
     queryFn: async () => {
@@ -64,16 +70,75 @@ export function useGitHubUserProfile(username: string) {
         }
       `;
       
-      return fetchGitHubAPI(query, { username });
+      return fetchGitHubAPI(query, { username }, token);
     },
-    enabled: Boolean(username) && Boolean(GITHUB_TOKEN),
+    enabled: Boolean(username) && Boolean(token || GITHUB_TOKEN),
+  });
+}
+
+// Query hook for user's repositories
+export function useUserRepositories(token?: string) {
+  return useQuery({
+    queryKey: ['userRepositories', token],
+    queryFn: async () => {
+      const query = `
+        query GetUserRepositories {
+          viewer {
+            login
+            repositories(first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
+              nodes {
+                name
+                nameWithOwner
+                owner {
+                  login
+                }
+                description
+                url
+                stargazerCount
+                forkCount
+                hasDiscussionsEnabled
+              }
+            }
+          }
+        }
+      `;
+      
+      return fetchGitHubAPI(query, {}, token);
+    },
+    enabled: Boolean(token),
+  });
+}
+
+// Query hook for repository discussion categories
+export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string) {
+  return useQuery({
+    queryKey: ['repositoryDiscussionCategories', owner, name, token],
+    queryFn: async () => {
+      const query = `
+        query GetRepositoryDiscussionCategories($owner: String!, $name: String!) {
+          repository(owner: $owner, name: $name) {
+            discussionCategories(first: 25) {
+              nodes {
+                id
+                name
+                emoji
+                description
+              }
+            }
+          }
+        }
+      `;
+      
+      return fetchGitHubAPI(query, { owner, name }, token);
+    },
+    enabled: Boolean(owner) && Boolean(name) && Boolean(token),
   });
 }
 
 // Example query hook for repository data
-export function useGitHubRepository(owner: string, name: string) {
+export function useGitHubRepository(owner: string, name: string, token?: string) {
   return useQuery({
-    queryKey: ['githubRepo', owner, name],
+    queryKey: ['githubRepo', owner, name, token],
     queryFn: async () => {
       const query = `
         query GetRepository($owner: String!, $name: String!) {
@@ -83,6 +148,7 @@ export function useGitHubRepository(owner: string, name: string) {
             url
             stargazerCount
             forkCount
+            hasDiscussionsEnabled
             issues(first: 5, states: OPEN) {
               nodes {
                 title
@@ -101,8 +167,8 @@ export function useGitHubRepository(owner: string, name: string) {
         }
       `;
       
-      return fetchGitHubAPI(query, { owner, name });
+      return fetchGitHubAPI(query, { owner, name }, token);
     },
-    enabled: Boolean(owner) && Boolean(name) && Boolean(GITHUB_TOKEN),
+    enabled: Boolean(owner) && Boolean(name) && Boolean(token),
   });
 }

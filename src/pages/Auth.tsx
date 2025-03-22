@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon } from 'lucide-react';
+import { GithubIcon, Loader2 } from 'lucide-react';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/');
+        navigate('/repositories');
       }
     };
     
@@ -46,12 +46,12 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Use user:email scope to ensure we get access to the user's email
+      // Add read:user scope to get basic profile info and user:email for email access
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
           redirectTo: window.location.origin,
-          scopes: 'user:email'
+          scopes: 'read:user user:email repo'
         }
       });
 
@@ -71,7 +71,7 @@ const Auth = () => {
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome</CardTitle>
+          <CardTitle className="text-2xl">Welcome to SuperGitHub</CardTitle>
           <CardDescription>
             Sign in with your GitHub account to access discussions with superpowers
           </CardDescription>
@@ -84,13 +84,17 @@ const Auth = () => {
             onClick={handleGitHubSignIn}
             disabled={loading}
           >
-            <GithubIcon size={16} />
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <GithubIcon size={16} className="mr-2" />
+            )}
             <span>{loading ? 'Signing in...' : 'Sign in with GitHub'}</span>
           </Button>
         </CardContent>
         
         <CardFooter className="flex justify-center text-xs text-muted-foreground">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          Requires GitHub account with repositories that have discussions enabled
         </CardFooter>
       </Card>
     </div>
