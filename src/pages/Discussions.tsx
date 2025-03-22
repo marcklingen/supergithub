@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -33,34 +32,23 @@ const Discussions = () => {
     }
   }, [githubToken]);
   
-  // Add keyboard navigation for categories
   useEffect(() => {
     if (!categories.length || !activeRepository) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle keyboard shortcuts when not in a discussion detail view
       if (discussionNumber) return;
       
-      // Don't capture keyboard events when an input is focused
       if (document.activeElement?.tagName === 'INPUT' || 
           document.activeElement?.tagName === 'TEXTAREA') {
         return;
       }
       
-      const currentIndex = categories.findIndex(cat => cat.id === activeCategory?.id);
-      
-      switch (e.key) {
-        case '1': case '2': case '3': case '4': case '5': 
-        case '6': case '7': case '8': case '9':
-          const numericIndex = parseInt(e.key) - 1;
-          if (numericIndex >= 0 && numericIndex < categories.length) {
-            e.preventDefault();
-            setActiveCategory(categories[numericIndex]);
-          }
-          break;
-          
-        default:
-          break;
+      if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '9') {
+        const numericIndex = parseInt(e.key) - 1;
+        if (numericIndex >= 0 && numericIndex < categories.length) {
+          e.preventDefault();
+          setActiveCategory(categories[numericIndex]);
+        }
       }
     };
     

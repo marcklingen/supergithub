@@ -31,6 +31,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { convertEmojiText } from '@/lib/utils';
+import { CommandShortcut } from '@/components/ui/command';
 
 const RepoSidebar = () => {
   const { activeRepository, repositories, setActiveRepository, setActiveCategory, activeCategory } = useRepo();
@@ -157,6 +158,9 @@ const RepoSidebar = () => {
     );
   }
   
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modKey = isMac ? '⌘' : 'Ctrl';
+  
   return (
     <div className="w-64 h-screen border-r bg-sidebar text-sidebar-foreground flex flex-col">
       <div className="p-4 border-b">
@@ -263,7 +267,7 @@ const RepoSidebar = () => {
               </div>
             ) : (
               <ul className="space-y-1">
-                {data?.repository?.discussionCategories?.nodes?.map((category: any) => (
+                {data?.repository?.discussionCategories?.nodes?.map((category: any, index: number) => (
                   <li key={category.id}>
                     <button 
                       onClick={() => handleCategoryClick({
@@ -273,16 +277,21 @@ const RepoSidebar = () => {
                         description: category.description
                       })}
                       className={`
-                        flex items-center gap-2 w-full rounded-md p-2 text-sm
+                        flex items-center justify-between w-full rounded-md p-2 text-sm
                         ${activeCategory?.id === category.id ? 
                           'bg-accent text-accent-foreground' : 
                           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
                       `}
                     >
-                      <span className="text-base" role="img" aria-label={category.name}>
-                        {convertEmojiText(category.emoji)}
-                      </span>
-                      <span className="truncate">{category.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base" role="img" aria-label={category.name}>
+                          {convertEmojiText(category.emoji)}
+                        </span>
+                        <span className="truncate">{category.name}</span>
+                      </div>
+                      {index < 9 && (
+                        <CommandShortcut className="text-xs">{modKey}{index + 1}</CommandShortcut>
+                      )}
                     </button>
                   </li>
                 ))}
