@@ -98,9 +98,16 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       replyTo: replyToId ? { id: replyToId } : null
     };
     
+    // Add the optimistic comment to the UI
     onCommentAdded(optimisticComment);
     
     try {
+      console.log("Submitting comment to GitHub API", { 
+        discussionId, 
+        body: comment, 
+        replyToId
+      });
+      
       const result = await addComment.mutateAsync({
         discussionId,
         body: comment,
@@ -118,6 +125,8 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       
       const realComment = result?.addDiscussionComment?.comment;
       if (realComment) {
+        // Pass the real comment back to the parent component
+        console.log("Passing real comment to parent:", realComment);
         onCommentAdded(realComment);
         
         toast({
@@ -183,3 +192,4 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     </div>
   );
 };
+

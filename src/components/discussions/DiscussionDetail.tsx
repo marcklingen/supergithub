@@ -70,7 +70,17 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
   
   const discussion = data?.repository?.discussion;
   
-  // Use custom hooks - pass refetch to useDiscussionComments
+  // Custom refetch function with logging
+  const enhancedRefetch = () => {
+    console.log("🔄 Refetching discussion details...");
+    refetch().then(() => {
+      console.log("✅ Discussion details refetched successfully");
+    }).catch(err => {
+      console.error("❌ Error refetching discussion details:", err);
+    });
+  };
+  
+  // Use custom hooks - pass enhanced refetch to useDiscussionComments
   const {
     optimisticComments,
     replyingToCommentId,
@@ -82,7 +92,7 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
   } = useDiscussionComments({
     discussionNumber,
     discussion,
-    refetch  // Pass the refetch function here
+    refetch: enhancedRefetch
   });
   
   const { navigateTo, handleBackClick } = useDiscussionNavigation({
@@ -100,9 +110,6 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
     prevDiscussion,
     nextDiscussion
   });
-  
-  // We can remove this effect since we now refetch in the hook
-  // directly after a comment is successfully posted
   
   if (isLoading) {
     return <DiscussionSkeleton onBackClick={handleBackClick} />;
@@ -147,3 +154,4 @@ const DiscussionDetail: React.FC<DiscussionDetailProps> = ({ prefetchedDiscussio
 };
 
 export default DiscussionDetail;
+

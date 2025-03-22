@@ -68,31 +68,32 @@ export const useDiscussionComments = ({
       }
     } else {
       // When we receive the real comment back from the API
+      console.log("Received real comment from API:", newComment);
+      
       // Find and remove the optimistic version
       const optimisticId = optimisticComments.find(c => 
         c.bodyHTML.replace(/<br>/g, '\n') === newComment.bodyHTML
       )?.id;
       
       if (optimisticId) {
+        console.log("Removing optimistic comment with ID:", optimisticId);
+        
+        // Clear the optimistic comment
         setOptimisticComments(prev => 
           prev.filter(c => c.id !== optimisticId)
         );
-        
-        // Refetch comments after a real comment is added
-        // This ensures both top-level and threaded comments are properly updated
-        setTimeout(() => {
-          refetch();
-        }, 500);
       } else {
+        console.log("Could not find matching optimistic comment, clearing all");
         // If we couldn't find a matching optimistic comment, clear all optimistic comments
-        // This is a fallback to prevent UI issues
         setOptimisticComments([]);
-        
-        // Still refetch to ensure we have the latest data
-        setTimeout(() => {
-          refetch();
-        }, 500);
       }
+      
+      // Always refetch after receiving a real comment, regardless of whether we found a match
+      console.log("Triggering refetch after real comment added");
+      // Add a small delay to ensure the GitHub API has propagated the changes
+      setTimeout(() => {
+        refetch();
+      }, 250);
     }
   };
 
@@ -191,3 +192,4 @@ export const useDiscussionComments = ({
     getReplyToComment
   };
 };
+
