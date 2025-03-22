@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -54,14 +55,12 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
       }
       
       switch (e.key) {
-        case 'ArrowUp':
         case 'k':
           e.preventDefault();
           if (prevDiscussion) {
             navigateTo(prevDiscussion);
           }
           break;
-        case 'ArrowDown':
         case 'j':
           e.preventDefault();
           if (nextDiscussion) {
