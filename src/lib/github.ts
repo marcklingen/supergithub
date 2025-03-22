@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -34,6 +33,22 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
     
     if (responseData.errors) {
       console.error('GitHub GraphQL errors:', responseData.errors);
+      
+      // Check if the error is related to organization access (missing read:org scope)
+      const isOrgAccessError = responseData.errors.some((e: any) => 
+        e.message && e.message.includes("'login' field requires") && e.message.includes("'read:org'")
+      );
+      
+      if (isOrgAccessError && responseData.data && responseData.data.viewer) {
+        // Still return the data we have (personal repos) with a warning
+        console.warn('Limited access: Unable to fetch organization repositories due to missing read:org scope');
+        return {
+          ...responseData.data,
+          _limitedAccess: true,
+          _orgAccessError: true
+        };
+      }
+      
       throw new Error(responseData.errors.map((e: any) => e.message).join('\n'));
     }
     
@@ -53,6 +68,7 @@ export function useUserRepositories(token?: string | null) {
         throw new Error('GitHub token is required to fetch repositories');
       }
       
+      // First, try to get both personal and org repositories
       const query = `
         query GetUserRepositories {
           viewer {
@@ -97,8 +113,51 @@ export function useUserRepositories(token?: string | null) {
         }
       `;
       
-      console.log('Fetching user repositories (including organization repos) with token:', token ? 'Token available' : 'No token');
-      return fetchGitHubAPI(query, {}, token);
+      try {
+        console.log('Fetching user repositories (including organization repos) with token:', token ? 'Token available' : 'No token');
+        return await fetchGitHubAPI(query, {}, token);
+      } catch (error: any) {
+        // If the error is specifically about organization access, fallback to just personal repos
+        if (error.message && error.message.includes("'login' field requires") && error.message.includes("'read:org'")) {
+          console.warn('Falling back to personal repositories only due to missing read:org scope');
+          
+          // Fallback query without organizations
+          const fallbackQuery = `
+            query GetUserPersonalRepositories {
+              viewer {
+                login
+                repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+                  totalCount
+                  nodes {
+                    name
+                    nameWithOwner
+                    owner {
+                      login
+                    }
+                    description
+                    url
+                    stargazerCount
+                    forkCount
+                    hasDiscussionsEnabled
+                    isPrivate
+                  }
+                }
+              }
+            }
+          `;
+          
+          const result = await fetchGitHubAPI(fallbackQuery, {}, token);
+          // Mark the result as having limited access
+          return {
+            ...result,
+            _limitedAccess: true,
+            _orgAccessError: true
+          };
+        }
+        
+        // For other errors, just rethrow
+        throw error;
+      }
     },
     enabled: Boolean(token),
     retry: 1,

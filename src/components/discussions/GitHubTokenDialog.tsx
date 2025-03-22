@@ -68,6 +68,7 @@ const GitHubTokenDialog = ({
                   <ul className="list-disc pl-5 mt-1">
                     <li><code className="bg-background px-1 py-0.5 rounded">repo</code> (full control of private repositories)</li>
                     <li><code className="bg-background px-1 py-0.5 rounded">write:discussion</code> (read and write discussions)</li>
+                    <li><code className="bg-background px-1 py-0.5 rounded">read:org</code> (access organization repositories - optional)</li>
                     <li><code className="bg-background px-1 py-0.5 rounded">write:issue</code> (may be needed for some repositories)</li>
                   </ul>
                 </li>

@@ -376,9 +376,9 @@ const Repositories = () => {
                     <li>Set an expiration if desired</li>
                     <li>Check these scopes:
                       <ul className="list-disc pl-5 mt-1">
-                        <li><code className="bg-background px-1 py-0.5 rounded">repo</code> (full control of repositories)</li>
-                        <li><code className="bg-background px-1 py-0.5 rounded">write:discussion</code> (for discussions)</li>
-                        <li><code className="bg-background px-1 py-0.5 rounded">write:issue</code> (may also be needed)</li>
+                        <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">repo</code> (full control of repositories)</li>
+                        <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">write:discussion</code> (for discussions)</li>
+                        <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">write:issue</code> (may also be needed)</li>
                       </ul>
                     </li>
                     <li>Click "Generate token" and copy the generated token</li>
@@ -533,11 +533,37 @@ const Repositories = () => {
                   </div>
                 ) : (
                   <div>
+                    {githubRepos?._orgAccessError && (
+                      <Alert className="mb-4" variant="warning">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Limited Access</AlertTitle>
+                        <AlertDescription>
+                          <p>Unable to fetch organization repositories due to missing <code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">read:org</code> scope.</p>
+                          <p className="text-sm mt-1">Only your personal repositories are displayed.</p>
+                          <p className="text-sm mt-1">To view organization repositories, update your token permissions.</p>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="mt-2"
+                            onClick={() => window.open("https://github.com/settings/tokens", "_blank")}
+                          >
+                            <ExternalLink size={14} className="mr-1" />
+                            Update Token Permissions
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
                     <Tabs defaultValue="all">
                       <TabsList className="mb-4">
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="personal">Personal</TabsTrigger>
-                        <TabsTrigger value="organization">Organization</TabsTrigger>
+                        <TabsTrigger value="organization" disabled={githubRepos?._orgAccessError}>
+                          Organization
+                          {githubRepos?._orgAccessError && (
+                            <span className="ml-1 text-xs text-amber-500">⚠️</span>
+                          )}
+                        </TabsTrigger>
                       </TabsList>
                       
                       <TabsContent value="all" className="space-y-4">
@@ -711,87 +737,27 @@ const Repositories = () => {
                       </TabsContent>
                       
                       <TabsContent value="organization" className="space-y-4">
-                        {githubRepos?.viewer?.organizations?.nodes
-                          ?.flatMap((org: any) => 
-                            org.repositories?.nodes
-                              ?.filter((repo: any) => repo.hasDiscussionsEnabled)
-                              ?.map((repo: any) => {
-                                const isConnected = repositories.some(r => 
-                                  r.fullName === repo.nameWithOwner
-                                );
-                                
-                                return (
-                                  <div key={repo.nameWithOwner} className="border rounded-md p-4">
-                                    <div className="flex justify-between items-start">
-                                      <div>
-                                        <div className="flex items-center gap-2">
-                                          <a 
-                                            href={repo.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="font-medium hover:text-primary transition-colors"
-                                          >
-                                            {repo.nameWithOwner}
-                                          </a>
-                                          
-                                          {repo.hasDiscussionsEnabled && (
-                                            <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded text-xs">
-                                              Discussions
-                                            </span>
-                                          )}
-                                          
-                                          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded text-xs flex items-center gap-1">
-                                            <Building2 size={12} />
-                                            Org
-                                          </span>
-                                        </div>
-                                        
-                                        {repo.description && (
-                                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                            {repo.description}
-                                          </p>
-                                        )}
-                                        
-                                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                          <div className="flex items-center gap-1">
-                                            <Star size={14} />
-                                            <span>{repo.stargazerCount}</span>
-                                          </div>
-                                          <div className="flex items-center gap-1">
-                                            <GitBranch size={14} />
-                                            <span>{repo.forkCount}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      
-                                      <Button 
-                                        size="sm" 
-                                        variant={isConnected ? "outline" : "default"} 
-                                        onClick={() => handleConnectGitHubRepo(repo)}
-                                        disabled={isConnected}
-                                      >
-                                        {isConnected ? (
-                                          <>
-                                            <Check size={14} className="mr-1" />
-                                            <span>Connected</span>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Plus size={14} className="mr-1" />
-                                            <span>Connect</span>
-                                          </>
-                                        )}
-                                      </Button>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                          )}
-                          
-                        {(!githubRepos?.viewer?.organizations?.nodes ||
+                        {githubRepos?._orgAccessError ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <Building2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                            <p>Organization repositories cannot be loaded</p>
+                            <p className="text-sm mt-2">
+                              Your token is missing the <code className="bg-muted px-1 py-0.5 rounded">read:org</code> scope
+                            </p>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="mt-4"
+                              onClick={() => window.open("https://github.com/settings/tokens", "_blank")}
+                            >
+                              <ExternalLink size={14} className="mr-1" />
+                              Update Token Permissions
+                            </Button>
+                          </div>
+                        ) : (!githubRepos?.viewer?.organizations?.nodes ||
                           !githubRepos?.viewer?.organizations?.nodes.some((org: any) => 
                             org.repositories?.nodes?.some((repo: any) => repo.hasDiscussionsEnabled)
-                          )) && (
+                          )) ? (
                           <div className="text-center py-8 text-muted-foreground">
                             <Building2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
                             <p>No organization repositories with discussions enabled found</p>
@@ -799,6 +765,78 @@ const Repositories = () => {
                               Enable discussions for your organization repositories on GitHub first
                             </p>
                           </div>
+                        ) : (
+                          getReposWithDiscussions().map((repo: any) => {
+                            const isConnected = repositories.some(r => 
+                              r.fullName === repo.nameWithOwner
+                            );
+                            
+                            return (
+                              <div key={repo.nameWithOwner} className="border rounded-md p-4">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <a 
+                                        href={repo.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="font-medium hover:text-primary transition-colors"
+                                      >
+                                        {repo.nameWithOwner}
+                                      </a>
+                                      
+                                      {repo.hasDiscussionsEnabled && (
+                                        <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded text-xs">
+                                          Discussions
+                                        </span>
+                                      )}
+                                      
+                                      <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded text-xs flex items-center gap-1">
+                                        <Building2 size={12} />
+                                        Org
+                                      </span>
+                                    </div>
+                                    
+                                    {repo.description && (
+                                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                        {repo.description}
+                                      </p>
+                                    )}
+                                    
+                                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                      <div className="flex items-center gap-1">
+                                        <Star size={14} />
+                                        <span>{repo.stargazerCount}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <GitBranch size={14} />
+                                        <span>{repo.forkCount}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <Button 
+                                    size="sm" 
+                                    variant={isConnected ? "outline" : "default"} 
+                                    onClick={() => handleConnectGitHubRepo(repo)}
+                                    disabled={isConnected}
+                                  >
+                                    {isConnected ? (
+                                      <>
+                                        <Check size={14} className="mr-1" />
+                                        <span>Connected</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Plus size={14} className="mr-1" />
+                                        <span>Connect</span>
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })
                         )}
                       </TabsContent>
                     </Tabs>
@@ -814,4 +852,3 @@ const Repositories = () => {
 };
 
 export default Repositories;
-
