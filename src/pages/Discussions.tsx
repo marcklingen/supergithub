@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -30,8 +29,6 @@ const Discussions = () => {
       return () => clearTimeout(timer);
     }
   }, [githubToken]);
-  
-  // Let's remove this keyboard handler since we're moving it to DiscussionCategories component
   
   const handleSetToken = (token: string) => {
     setManualGithubToken(token);

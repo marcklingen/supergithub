@@ -1,11 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiscussionDetails, useRepositoryDiscussions } from '@/lib/github';
 import { convertEmojiText } from '@/lib/utils';
-import ThreadNavigation from './ThreadNavigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
   User,
@@ -85,14 +83,46 @@ const DiscussionDetail = () => {
   // Add useEffect to handle the Escape key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleBackClick();
+      // Skip if user is typing in an input or textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      
+      switch (e.key) {
+        case 'k':
+          e.preventDefault();
+          if (prevDiscussion) {
+            navigateTo(prevDiscussion);
+          }
+          break;
+        case 'j':
+          e.preventDefault();
+          if (nextDiscussion) {
+            navigateTo(nextDiscussion);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          handleBackClick();
+          break;
+        case 'o':
+          e.preventDefault();
+          if (activeRepository) {
+            window.open(`https://github.com/${activeRepository.owner}/${activeRepository.name}/discussions/${discussionNumber}`, '_blank');
+          }
+          break;
+        default:
+          break;
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [prevDiscussion, nextDiscussion, activeRepository, currentDiscussionNumber]);
   
   if (isLoading) {
     return (
@@ -409,8 +439,6 @@ const DiscussionDetail = () => {
           </div>
         )}
       </div>
-      
-      <ThreadNavigation currentDiscussionNumber={discussionNumber} />
     </>
   );
 };
