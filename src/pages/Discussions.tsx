@@ -36,7 +36,9 @@ const Discussions = () => {
               Boolean(activeCategory?.id) && 
               Boolean(githubToken),
       staleTime: 1000 * 60 * 5, // 5 minutes
-    }
+    },
+    'UPDATED_AT', // Default sort field
+    'DESC'        // Default sort order
   );
   
   useEffect(() => {

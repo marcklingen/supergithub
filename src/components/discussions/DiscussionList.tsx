@@ -1,8 +1,14 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepo } from '@/contexts/RepoContext';
-import { useRepositoryDiscussions, Discussion, DiscussionsResponse } from '@/lib/github';
+import { 
+  useRepositoryDiscussions, 
+  Discussion, 
+  SortField, 
+  SortOrder 
+} from '@/lib/github';
 import { convertEmojiText } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { 
@@ -31,9 +37,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type SortField = 'updatedAt' | 'createdAt' | 'upvoteCount';
-type SortOrder = 'asc' | 'desc';
-
 interface DiscussionListProps {
   prefetchedDiscussions?: Discussion[];
 }
@@ -44,11 +47,22 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
-  const [sortField, setSortField] = useState<SortField>('updatedAt');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [sortField, setSortField] = useState<string>('UPDATED_AT');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Map client-side sort fields to GitHub API sort fields
+  const mapSortField = (field: string): SortField => {
+    switch (field) {
+      case 'createdAt':
+        return 'CREATED_AT';
+      case 'updatedAt':
+      default:
+        return 'UPDATED_AT';
+    }
+  };
   
   const { 
     data, 
@@ -70,7 +84,9 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
               Boolean(activeRepository?.name) && 
               Boolean(activeCategory?.id) && 
               Boolean(githubToken)
-    }
+    },
+    mapSortField(sortField),
+    sortOrder
   );
   
   const initialDiscussions = prefetchedDiscussions.length > 0 
@@ -188,25 +204,18 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
   };
 
   const handleSortChange = (value: string) => {
-    setSortField(value as SortField);
+    setSortField(value);
+    setCursor(undefined);
+    setAllDiscussions([]);
+    refetch();
   };
 
   const toggleSortOrder = () => {
-    setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
-  };
-  
-  const getSortedDiscussions = () => {
-    return [...allDiscussions].sort((a, b) => {
-      if (sortField === 'upvoteCount') {
-        return sortOrder === 'asc' 
-          ? a.upvoteCount - b.upvoteCount 
-          : b.upvoteCount - a.upvoteCount;
-      } else {
-        const dateA = new Date(a[sortField]).getTime();
-        const dateB = new Date(b[sortField]).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-      }
-    });
+    const newOrder = sortOrder === 'ASC' ? 'DESC' : 'ASC';
+    setSortOrder(newOrder);
+    setCursor(undefined);
+    setAllDiscussions([]);
+    refetch();
   };
   
   if (isLoading && !allDiscussions.length) {
@@ -255,8 +264,6 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
       </Card>
     );
   }
-
-  const sortedDiscussions = getSortedDiscussions();
   
   return (
     <div className="space-y-4">
@@ -276,7 +283,6 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
             <SelectContent>
               <SelectItem value="updatedAt">Last Updated</SelectItem>
               <SelectItem value="createdAt">Created Date</SelectItem>
-              <SelectItem value="upvoteCount">Upvotes</SelectItem>
             </SelectContent>
           </Select>
           
@@ -285,15 +291,15 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
             size="sm"
             onClick={toggleSortOrder}
             className="h-9 px-3"
-            title={`Sort ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
+            title={`Sort ${sortOrder === 'ASC' ? 'Ascending' : 'Descending'}`}
           >
-            {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+            {sortOrder === 'ASC' ? <SortAsc size={16} /> : <SortDesc size={16} />}
           </Button>
         </div>
       </div>
       
       <div ref={listRef} className="space-y-2">
-        {sortedDiscussions.map((discussion: Discussion, index: number) => (
+        {allDiscussions.map((discussion: Discussion, index: number) => (
           <Card 
             key={discussion.id}
             className={`discussion-item border hover:border-primary/50 transition-colors cursor-pointer ${

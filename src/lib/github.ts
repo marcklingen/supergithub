@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -108,6 +109,10 @@ export interface DiscussionDetailsResponse {
   repository: GitHubRepository;
   _orgAccessError?: boolean;
 }
+
+// Add types for sort field and order
+export type SortField = 'CREATED_AT' | 'UPDATED_AT';
+export type SortOrder = 'ASC' | 'DESC';
 
 // Make queryClient globally accessible for prefetching
 declare global {
@@ -306,10 +311,12 @@ export function useRepositoryDiscussions(
   first: number = 10,
   after?: string,
   token?: string | null,
-  options?: Partial<UseQueryOptions<DiscussionsResponse, Error>>
+  options?: Partial<UseQueryOptions<DiscussionsResponse, Error>>,
+  sortField: SortField = 'UPDATED_AT',
+  sortOrder: SortOrder = 'DESC'
 ) {
   return useQuery({
-    queryKey: ['repositoryDiscussions', owner, name, categoryId, after],
+    queryKey: ['repositoryDiscussions', owner, name, categoryId, after, sortField, sortOrder],
     queryFn: async (): Promise<DiscussionsResponse> => {
       if (!token) {
         throw new Error('GitHub token is required for this operation');
@@ -321,14 +328,15 @@ export function useRepositoryDiscussions(
           $name: String!, 
           $categoryId: ID!, 
           $first: Int!, 
-          $after: String
+          $after: String,
+          $orderBy: DiscussionOrder!
         ) {
           repository(owner: $owner, name: $name) {
             discussions(
               first: $first, 
               after: $after, 
               categoryId: $categoryId,
-              orderBy: {field: UPDATED_AT, direction: DESC}
+              orderBy: $orderBy
             ) {
               pageInfo {
                 hasNextPage
@@ -368,6 +376,8 @@ export function useRepositoryDiscussions(
       `;
       
       console.log('Fetching discussions with categoryId:', categoryId);
+      console.log('Using sort field:', sortField, 'and order:', sortOrder);
+      
       return fetchGitHubAPI(
         query, 
         { 
@@ -375,7 +385,11 @@ export function useRepositoryDiscussions(
           name, 
           categoryId, 
           first, 
-          after: after || null 
+          after: after || null,
+          orderBy: {
+            field: sortField,
+            direction: sortOrder
+          }
         }, 
         token
       );
