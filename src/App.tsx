@@ -13,7 +13,15 @@ import Discussions from "./pages/Discussions";
 import AccountSettings from "./pages/AccountSettings";
 import Layout from "./pages/Layout";
 
-const queryClient = new QueryClient();
+// Configure the React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     console.log("No GitHub token found in session");
-    console.log("Session object:", JSON.stringify(session, null, 2));
     
     return null;
   };
@@ -76,30 +75,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed, event:", event);
+    try {
+      // Set up auth state listener FIRST
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log("Auth state changed, event:", event);
+          setSession(session);
+          setUser(session?.user ?? null);
+          const token = extractGitHubToken(session);
+          setGithubToken(token);
+          console.log("Auth state changed, token available:", !!token);
+          setLoading(false);
+        }
+      );
+
+      // THEN check for existing session
+      supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
         const token = extractGitHubToken(session);
         setGithubToken(token);
-        console.log("Auth state changed, token available:", !!token);
+        console.log("Initial session check, token available:", !!token);
         setLoading(false);
-      }
-    );
+      }).catch(error => {
+        console.error("Error getting session:", error);
+        setLoading(false);
+      });
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      const token = extractGitHubToken(session);
-      setGithubToken(token);
-      console.log("Initial session check, token available:", !!token);
+      return () => {
+        if (subscription && typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+        }
+      };
+    } catch (error) {
+      console.error("Error in auth setup:", error);
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const signOut = async () => {
