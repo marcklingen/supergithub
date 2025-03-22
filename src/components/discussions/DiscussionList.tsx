@@ -21,13 +21,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationNext, 
-  PaginationPrevious 
-} from '@/components/ui/pagination';
 
 interface Discussion {
   id: string;
@@ -58,6 +51,7 @@ const DiscussionList = () => {
   const [activeDiscussionId, setActiveDiscussionId] = useState<number | null>(null);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
@@ -68,8 +62,8 @@ const DiscussionList = () => {
     isLoading, 
     isError, 
     error,
-    fetchNextPage,
-    isFetchingNextPage
+    isFetching,
+    refetch
   } = useRepositoryDiscussions(
     activeRepository?.owner || '', 
     activeRepository?.name || '', 
@@ -79,20 +73,34 @@ const DiscussionList = () => {
     token
   );
   
+  // Extract discussions and pagination info
   const discussions = data?.repository?.discussions?.nodes || [];
   const pageInfo = data?.repository?.discussions?.pageInfo;
   const totalCount = data?.repository?.discussions?.totalCount || 0;
   
+  // Update allDiscussions when new data is loaded
+  useEffect(() => {
+    if (discussions.length > 0) {
+      if (cursor) {
+        // If we have a cursor, append to existing discussions
+        setAllDiscussions(prev => [...prev, ...discussions]);
+      } else {
+        // If no cursor (initial load), replace all discussions
+        setAllDiscussions(discussions);
+      }
+    }
+  }, [discussions, cursor]);
+  
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!discussions.length) return;
+      if (!allDiscussions.length) return;
       
       switch (e.key) {
         case 'ArrowDown':
         case 'j':
           e.preventDefault();
-          setSelectedIndex(prev => Math.min(prev + 1, discussions.length - 1));
+          setSelectedIndex(prev => Math.min(prev + 1, allDiscussions.length - 1));
           break;
         case 'ArrowUp':
         case 'k':
@@ -100,8 +108,8 @@ const DiscussionList = () => {
           setSelectedIndex(prev => Math.max(prev - 1, 0));
           break;
         case 'Enter':
-          if (selectedIndex >= 0 && selectedIndex < discussions.length) {
-            const discussion = discussions[selectedIndex];
+          if (selectedIndex >= 0 && selectedIndex < allDiscussions.length) {
+            const discussion = allDiscussions[selectedIndex];
             navigate(`/discussions/${discussion.number}`);
           }
           break;
@@ -112,7 +120,14 @@ const DiscussionList = () => {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [discussions, selectedIndex, navigate]);
+  }, [allDiscussions, selectedIndex, navigate]);
+  
+  // Reset state when category changes
+  useEffect(() => {
+    setCursor(undefined);
+    setAllDiscussions([]);
+    setSelectedIndex(-1);
+  }, [activeCategory?.id, activeRepository?.name]);
   
   // Scroll selected item into view
   useEffect(() => {
@@ -137,7 +152,7 @@ const DiscussionList = () => {
     navigate(`/discussions/${discussion.number}`);
   };
   
-  if (isLoading) {
+  if (isLoading && !allDiscussions.length) {
     return (
       <div className="space-y-4">
         {[1, 2, 3, 4, 5].map(i => (
@@ -170,7 +185,7 @@ const DiscussionList = () => {
     );
   }
   
-  if (discussions.length === 0) {
+  if (allDiscussions.length === 0) {
     return (
       <Card className="border bg-muted/30 text-center p-8">
         <h3 className="text-lg font-medium mb-2">No discussions found</h3>
@@ -188,7 +203,7 @@ const DiscussionList = () => {
       </div>
       
       <div ref={listRef} className="space-y-2">
-        {discussions.map((discussion: Discussion, index: number) => (
+        {allDiscussions.map((discussion: Discussion, index: number) => (
           <Card 
             key={discussion.id}
             className={`discussion-item border hover:border-primary/50 transition-colors cursor-pointer ${
@@ -262,10 +277,10 @@ const DiscussionList = () => {
           <Button 
             variant="outline" 
             onClick={handleLoadMore}
-            disabled={isFetchingNextPage}
+            disabled={isFetching}
             className="w-full sm:w-auto"
           >
-            {isFetchingNextPage ? (
+            {isFetching ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Loading...

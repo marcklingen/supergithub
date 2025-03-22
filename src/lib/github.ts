@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -44,18 +43,15 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   }
 }
 
-// Updated query hook for user's repositories that includes both personal repositories and those in organizations
 export function useUserRepositories(token?: string | null) {
   return useQuery({
     queryKey: ['userRepositories', token],
     queryFn: async () => {
-      // Ensure we have a token
       if (!token) {
         console.error('No GitHub token provided for useUserRepositories');
         throw new Error('GitHub token is required to fetch repositories');
       }
       
-      // Updated query to include both personal repositories and those in organizations
       const query = `
         query GetUserRepositories {
           viewer {
@@ -109,7 +105,6 @@ export function useUserRepositories(token?: string | null) {
   });
 }
 
-// Query hook for repository discussion categories
 export function useRepositoryDiscussionCategories(owner: string, name: string, token?: string | null) {
   return useQuery({
     queryKey: ['repositoryDiscussionCategories', owner, name, token],
@@ -135,7 +130,6 @@ export function useRepositoryDiscussionCategories(owner: string, name: string, t
   });
 }
 
-// New query hook for discussions list with pagination
 export function useRepositoryDiscussions(
   owner: string, 
   name: string, 
@@ -215,7 +209,6 @@ export function useRepositoryDiscussions(
   });
 }
 
-// New query hook for single discussion details
 export function useDiscussionDetails(
   owner: string, 
   name: string, 
@@ -283,7 +276,6 @@ export function useDiscussionDetails(
   });
 }
 
-// Example query hook for user profile
 export function useGitHubUserProfile(username: string, token?: string | null) {
   return useQuery({
     queryKey: ['githubUser', username],
@@ -315,7 +307,6 @@ export function useGitHubUserProfile(username: string, token?: string | null) {
   });
 }
 
-// Example query hook for repository data
 export function useGitHubRepository(owner: string, name: string, token?: string | null) {
   return useQuery({
     queryKey: ['githubRepo', owner, name, token],
