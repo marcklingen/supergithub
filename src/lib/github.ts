@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -8,11 +7,6 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
     console.error('No GitHub token provided for GitHub API request');
     throw new Error('GitHub token is required for this operation');
   }
-  
-  console.log(`Fetching GitHub API with token available: ${token ? 'Yes' : 'No'}`);
-  console.log('GitHub token length:', token.length);
-  console.log('Query:', query);
-  console.log('Variables:', variables);
   
   try {
     const response = await fetch(GITHUB_API_URL, {
@@ -31,6 +25,23 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
     }
 
     const responseData = await response.json();
+    
+    const orgAccessError = responseData.errors?.some((error: any) => 
+      error.type === 'FORBIDDEN' && 
+      (error.message.includes('resource not accessible by integration') || 
+       error.message.includes('Resource not accessible by integration'))
+    );
+    
+    if (orgAccessError) {
+      console.warn('Limited GitHub organization access permissions. Some organization repositories may not be visible.');
+      
+      if (responseData.data) {
+        return {
+          ...responseData.data,
+          _orgAccessError: true,
+        };
+      }
+    }
     
     if (responseData.errors) {
       console.error('GitHub GraphQL errors:', responseData.errors);
@@ -53,8 +64,8 @@ export function useUserRepositories(token?: string | null) {
         throw new Error('GitHub token is required to fetch repositories');
       }
       
-      const query = `
-        query GetUserRepositories {
+      const personalReposQuery = `
+        query GetUserPersonalRepositories {
           viewer {
             login
             repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
@@ -73,32 +84,56 @@ export function useUserRepositories(token?: string | null) {
                 isPrivate
               }
             }
-            organizations(first: 100) {
-              nodes {
-                login
-                repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
-                  nodes {
-                    name
-                    nameWithOwner
-                    owner {
-                      login
+          }
+        }
+      `;
+      
+      const personalData = await fetchGitHubAPI(personalReposQuery, {}, token);
+      
+      try {
+        const orgReposQuery = `
+          query GetUserOrganizationRepositories {
+            viewer {
+              login
+              organizations(first: 100) {
+                nodes {
+                  login
+                  repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+                    nodes {
+                      name
+                      nameWithOwner
+                      owner {
+                        login
+                      }
+                      description
+                      url
+                      stargazerCount
+                      forkCount
+                      hasDiscussionsEnabled
+                      isPrivate
                     }
-                    description
-                    url
-                    stargazerCount
-                    forkCount
-                    hasDiscussionsEnabled
-                    isPrivate
                   }
                 }
               }
             }
           }
-        }
-      `;
-      
-      console.log('Fetching user repositories (including organization repos) with token:', token ? 'Token available' : 'No token');
-      return fetchGitHubAPI(query, {}, token);
+        `;
+        
+        const orgData = await fetchGitHubAPI(orgReposQuery, {}, token);
+        
+        return {
+          viewer: {
+            ...personalData.viewer,
+            organizations: orgData.viewer.organizations
+          }
+        };
+      } catch (error) {
+        console.warn('Failed to load organization repositories:', error);
+        return {
+          ...personalData,
+          _orgAccessError: true
+        };
+      }
     },
     enabled: Boolean(token),
     retry: 1,
