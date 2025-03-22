@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,7 +45,7 @@ interface Discussion {
 }
 
 const DiscussionList = () => {
-  const { user } = useAuth();
+  const { githubToken } = useAuth();
   const { activeRepository, activeCategory } = useRepo();
   const [activeDiscussionId, setActiveDiscussionId] = useState<number | null>(null);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -54,8 +53,6 @@ const DiscussionList = () => {
   const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  
-  const token = user?.user_metadata?.provider_token;
   
   const { 
     data, 
@@ -70,28 +67,23 @@ const DiscussionList = () => {
     activeCategory?.id || '',
     10,
     cursor,
-    token
+    githubToken
   );
   
-  // Extract discussions and pagination info
   const discussions = data?.repository?.discussions?.nodes || [];
   const pageInfo = data?.repository?.discussions?.pageInfo;
   const totalCount = data?.repository?.discussions?.totalCount || 0;
   
-  // Update allDiscussions when new data is loaded
   useEffect(() => {
     if (discussions.length > 0) {
       if (cursor) {
-        // If we have a cursor, append to existing discussions
         setAllDiscussions(prev => [...prev, ...discussions]);
       } else {
-        // If no cursor (initial load), replace all discussions
         setAllDiscussions(discussions);
       }
     }
   }, [discussions, cursor]);
   
-  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!allDiscussions.length) return;
@@ -122,14 +114,12 @@ const DiscussionList = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [allDiscussions, selectedIndex, navigate]);
   
-  // Reset state when category changes
   useEffect(() => {
     setCursor(undefined);
     setAllDiscussions([]);
     setSelectedIndex(-1);
   }, [activeCategory?.id, activeRepository?.name]);
   
-  // Scroll selected item into view
   useEffect(() => {
     if (selectedIndex >= 0 && listRef.current) {
       const items = listRef.current.querySelectorAll('.discussion-item');

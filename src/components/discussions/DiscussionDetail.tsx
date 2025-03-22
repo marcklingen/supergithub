@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,11 +29,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const DiscussionDetail = () => {
   const { discussionNumber } = useParams<{ discussionNumber: string }>();
-  const { user } = useAuth();
+  const { githubToken } = useAuth();
   const { activeRepository } = useRepo();
   const navigate = useNavigate();
-  
-  const token = user?.user_metadata?.provider_token;
   
   // Convert the discussion number to an integer
   const number = discussionNumber ? parseInt(discussionNumber, 10) : 0;
@@ -48,7 +45,7 @@ const DiscussionDetail = () => {
     activeRepository?.owner || '',
     activeRepository?.name || '',
     number,
-    token
+    githubToken
   );
   
   const discussion = data?.repository?.discussion;
