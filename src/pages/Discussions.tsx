@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -19,16 +18,14 @@ const Discussions = () => {
   const { discussionNumber } = useParams<{ discussionNumber: string }>();
   const navigate = useNavigate();
   
-  // State for the token input modal
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
   
-  // Show token modal if no token is available after a short delay
   useEffect(() => {
     if (!githubToken) {
       const timer = setTimeout(() => {
         setShowTokenModal(true);
-      }, 500); // Small delay to avoid flash on initial load
+      }, 500);
       
       return () => clearTimeout(timer);
     }
@@ -89,7 +86,6 @@ const Discussions = () => {
           )}
         </div>
         
-        {/* Token input modal */}
         <Dialog open={showTokenModal} onOpenChange={setShowTokenModal}>
           <DialogContent>
             <DialogHeader>

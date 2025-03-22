@@ -1,9 +1,9 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useParams } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDiscussionDetails } from '@/lib/github';
-import { formatDistanceToNow, format } from 'date-fns';
+import ThreadNavigation from './ThreadNavigation';
 import {
   User,
   Clock,
@@ -28,13 +28,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const DiscussionDetail = () => {
-  const { discussionNumber } = useParams<{ discussionNumber: string }>();
+  const params = useParams();
   const { githubToken } = useAuth();
   const { activeRepository } = useRepo();
   const navigate = useNavigate();
   
-  // Convert the discussion number to an integer
-  const number = discussionNumber ? parseInt(discussionNumber, 10) : 0;
+  const discussionNumber = Number(params.discussionNumber);
   
   const {
     data,
@@ -44,7 +43,7 @@ const DiscussionDetail = () => {
   } = useDiscussionDetails(
     activeRepository?.owner || '',
     activeRepository?.name || '',
-    number,
+    discussionNumber,
     githubToken
   );
   
@@ -158,7 +157,7 @@ const DiscussionDetail = () => {
   }
   
   return (
-    <div className="space-y-6">
+    <>
       <div className="flex items-center justify-between gap-4 mb-4">
         <Button variant="ghost" size="sm" onClick={handleBackClick}>
           <ChevronLeft size={16} className="mr-1" />
@@ -316,7 +315,9 @@ const DiscussionDetail = () => {
           </div>
         )}
       </div>
-    </div>
+      
+      <ThreadNavigation currentDiscussionNumber={discussionNumber} />
+    </>
   );
 };
 
