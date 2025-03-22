@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -26,15 +27,18 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
 
     const responseData = await response.json();
     
+    // Check for organization access error specifically
     const orgAccessError = responseData.errors?.some((error: any) => 
-      error.type === 'FORBIDDEN' && 
-      (error.message.includes('resource not accessible by integration') || 
-       error.message.includes('Resource not accessible by integration'))
+      (error.type === 'FORBIDDEN' && 
+       (error.message.includes('resource not accessible by integration') || 
+        error.message.includes('Resource not accessible by integration'))) ||
+      error.message.includes("The 'login' field requires one of the following scopes")
     );
     
     if (orgAccessError) {
       console.warn('Limited GitHub organization access permissions. Some organization repositories may not be visible.');
       
+      // Return partial data with an error flag
       if (responseData.data) {
         return {
           ...responseData.data,
@@ -88,9 +92,11 @@ export function useUserRepositories(token?: string | null) {
         }
       `;
       
+      // First fetch personal repositories (this should always work with a valid token)
       const personalData = await fetchGitHubAPI(personalReposQuery, {}, token);
       
       try {
+        // Then attempt to fetch organization repositories (may fail if missing read:org scope)
         const orgReposQuery = `
           query GetUserOrganizationRepositories {
             viewer {
@@ -121,6 +127,7 @@ export function useUserRepositories(token?: string | null) {
         
         const orgData = await fetchGitHubAPI(orgReposQuery, {}, token);
         
+        // Successfully got both, combine them
         return {
           viewer: {
             ...personalData.viewer,
@@ -128,7 +135,9 @@ export function useUserRepositories(token?: string | null) {
           }
         };
       } catch (error) {
-        console.warn('Failed to load organization repositories:', error);
+        console.warn('Failed to load organization repositories, proceeding with personal repos only:', error);
+        
+        // Return only personal repositories with a flag indicating org access error
         return {
           ...personalData,
           _orgAccessError: true

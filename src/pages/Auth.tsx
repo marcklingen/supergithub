@@ -1,11 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2, AlertTriangle } from 'lucide-react';
+import { GithubIcon, Loader2, AlertTriangle, Key } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -28,6 +28,7 @@ const Auth = () => {
   const [isDevMode, setIsDevMode] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
@@ -38,6 +39,11 @@ const Auth = () => {
       password: '',
     },
   });
+  
+  // Extract URL parameters
+  const searchParams = new URLSearchParams(location.search);
+  const reauth = searchParams.get('reauth') === 'true';
+  const includeOrgScope = searchParams.get('scope') === 'read:org';
 
   // Check if in development mode (based on environment)
   useEffect(() => {
@@ -62,13 +68,13 @@ const Auth = () => {
     }
   }, [toast]);
 
-  // Redirect if user is already logged in
+  // Redirect if user is already logged in (but not if we're doing a reauth)
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && !reauth) {
       console.log('User already logged in, redirecting to repositories');
       navigate('/repositories');
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, reauth]);
 
   async function handleGitHubSignIn() {
     try {
@@ -83,12 +89,20 @@ const Auth = () => {
       setLoading(true);
       console.log('Initiating GitHub sign-in');
       
-      // Updated scopes to include write:issue permission
+      // Define scopes based on whether we need org access
+      let scopes = 'repo read:user user:email write:discussion write:issue';
+      
+      // Add read:org scope if requested
+      if (includeOrgScope) {
+        scopes += ' read:org';
+        console.log('Including read:org scope for organization access');
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth`, // Explicitly redirect to the /auth route
-          scopes: 'repo read:user user:email write:discussion write:issue', // Added write:issue scope
+          redirectTo: `${window.location.origin}/auth`, 
+          scopes: scopes,
         }
       });
 
@@ -158,9 +172,16 @@ const Auth = () => {
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome to SuperGitHub</CardTitle>
+          <CardTitle className="text-2xl">
+            {reauth ? "Update GitHub Permissions" : "Welcome to SuperGitHub"}
+          </CardTitle>
           <CardDescription>
-            Sign in with your {isDevMode ? "GitHub account or credentials" : "GitHub account"} to access discussions with superpowers
+            {reauth ? 
+              (includeOrgScope ? 
+                "Additional organization access permissions are needed" : 
+                "Please reconnect your GitHub account") : 
+              `Sign in with your ${isDevMode ? "GitHub account or credentials" : "GitHub account"} to access discussions with superpowers`
+            }
           </CardDescription>
         </CardHeader>
         
@@ -170,6 +191,16 @@ const Auth = () => {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Authentication Error</AlertTitle>
               <AlertDescription>{loginError}</AlertDescription>
+            </Alert>
+          )}
+          
+          {includeOrgScope && (
+            <Alert variant="warning" className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 dark:text-amber-400">Organization Access Required</AlertTitle>
+              <AlertDescription className="text-amber-700 dark:text-amber-500">
+                <p>Your current token doesn't have organization access permissions. Click below to reconnect with GitHub and grant additional access.</p>
+              </AlertDescription>
             </Alert>
           )}
           
@@ -184,7 +215,10 @@ const Auth = () => {
             ) : (
               <GithubIcon size={16} className="mr-2" />
             )}
-            <span>{loading ? 'Signing in...' : 'Sign in with GitHub'}</span>
+            <span>
+              {loading ? 'Signing in...' : 
+               (reauth ? 'Reconnect with GitHub' : 'Sign in with GitHub')}
+            </span>
           </Button>
 
           {isDevMode && (
