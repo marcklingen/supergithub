@@ -9,6 +9,7 @@ interface AuthContextType {
   githubToken: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  setManualGithubToken: (token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,10 +53,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return session.user.app_metadata.access_token;
     }
     
+    // Check in localStorage for manually set token
+    const manualToken = localStorage.getItem('manual_github_token');
+    if (manualToken) {
+      console.log("Found manually set token in localStorage");
+      return manualToken;
+    }
+    
     console.log("No GitHub token found in session");
     console.log("Session object:", JSON.stringify(session, null, 2));
     
     return null;
+  };
+
+  // Function to manually set a GitHub token
+  const setManualGithubToken = (token: string) => {
+    // Store the token in localStorage
+    localStorage.setItem('manual_github_token', token);
+    // Update the state
+    setGithubToken(token);
+    console.log("Manually set GitHub token");
   };
 
   useEffect(() => {
@@ -86,10 +103,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Clear manual token when signing out
+    localStorage.removeItem('manual_github_token');
+    setGithubToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, githubToken, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, githubToken, loading, signOut, setManualGithubToken }}>
       {children}
     </AuthContext.Provider>
   );

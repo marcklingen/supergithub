@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -28,7 +27,8 @@ import {
   MessageSquare,
   Info,
   Building2,
-  Copy
+  Copy,
+  Key
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -42,11 +42,22 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Repositories = () => {
   const [repoInput, setRepoInput] = useState('');
+  const [manualTokenInput, setManualTokenInput] = useState('');
+  const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
   const { repositories, addRepository, removeRepository, setActiveRepository } = useRepo();
-  const { user, githubToken, session } = useAuth();
+  const { user, githubToken, session, setManualGithubToken } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -158,6 +169,26 @@ const Repositories = () => {
     }
   };
 
+  const handleSetManualToken = () => {
+    if (!manualTokenInput.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid GitHub token",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setManualGithubToken(manualTokenInput.trim());
+    setTokenDialogOpen(false);
+    setManualTokenInput('');
+    toast({
+      title: "Token Set",
+      description: "GitHub token has been set successfully"
+    });
+    refetch();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -217,6 +248,15 @@ const Repositories = () => {
                     <Button 
                       size="sm" 
                       variant="outline" 
+                      onClick={() => setTokenDialogOpen(true)}
+                      className="mr-2"
+                    >
+                      <Key size={14} className="mr-1" />
+                      Set Token Manually
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
                       onClick={() => refetch()}
                     >
                       Retry Fetching
@@ -227,6 +267,38 @@ const Repositories = () => {
             </AlertDescription>
           </Alert>
         )}
+        
+        {/* Token Input Dialog */}
+        <Dialog open={tokenDialogOpen} onOpenChange={setTokenDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Set GitHub Token Manually</DialogTitle>
+              <DialogDescription>
+                Enter your GitHub personal access token. This will be stored locally in your browser.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="ghp_xxxxxxxxxxxxxxxx"
+                value={manualTokenInput}
+                onChange={(e) => setManualTokenInput(e.target.value)}
+                className="mb-2"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Your token needs at least <code>repo</code> and <code>read:discussion</code> scopes.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Create a new token on GitHub ↗
+                </a>
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTokenDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSetManualToken}>Save Token</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         
         <div className="grid md:grid-cols-2 gap-8">
           <div>
