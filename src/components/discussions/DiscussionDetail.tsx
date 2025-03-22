@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { DiscussionNotFound } from './discussion-components/DiscussionNotFound';
 import { DiscussionNavigationBar } from './discussion-components/DiscussionNavigationBar';
 import { DiscussionContent } from './discussion-components/DiscussionContent';
 import { CommentsList } from './discussion-components/CommentsList';
+import { CommentComposer } from './discussion-components/CommentComposer';
 
 const DiscussionDetail = () => {
   const params = useParams();
@@ -18,6 +19,7 @@ const DiscussionDetail = () => {
   const navigate = useNavigate();
   
   const discussionNumber = Number(params.discussionNumber);
+  const [optimisticComments, setOptimisticComments] = useState<any[]>([]);
   
   const {
     data,
@@ -57,8 +59,29 @@ const DiscussionDetail = () => {
   
   const discussion = data?.repository?.discussion;
   
+  // Reset optimistic comments when discussion changes
+  useEffect(() => {
+    setOptimisticComments([]);
+  }, [discussionNumber]);
+  
   const handleBackClick = () => {
     navigate('/discussions');
+  };
+  
+  const handleAddComment = (newComment: any) => {
+    // If this is an optimistic comment, add it to our local state
+    if (newComment.isOptimistic) {
+      setOptimisticComments(prev => {
+        // Replace existing optimistic comment (if we have one with same id)
+        const filtered = prev.filter(c => c.id !== newComment.id);
+        return [...filtered, newComment];
+      });
+    } else {
+      // If it's a real comment from the API, remove any optimistic versions
+      setOptimisticComments(prev => 
+        prev.filter(c => c.id !== 'optimistic-' + newComment.id)
+      );
+    }
   };
   
   // Add useEffect to handle the Escape key press
@@ -117,6 +140,15 @@ const DiscussionDetail = () => {
     return <DiscussionNotFound onBackClick={handleBackClick} />;
   }
   
+  // Merge API comments with optimistic comments
+  const allComments = {
+    ...discussion.comments,
+    nodes: [
+      ...discussion.comments.nodes,
+      ...optimisticComments
+    ]
+  };
+  
   return (
     <>
       <DiscussionNavigationBar
@@ -130,7 +162,13 @@ const DiscussionDetail = () => {
       
       <DiscussionContent discussion={discussion} />
       
-      <CommentsList comments={discussion.comments} />
+      <CommentsList comments={allComments} />
+      
+      <CommentComposer 
+        discussionId={discussion.id} 
+        discussionNumber={discussionNumber}
+        onCommentAdded={handleAddComment}
+      />
     </>
   );
 };

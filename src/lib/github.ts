@@ -1,5 +1,4 @@
-
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
 
@@ -367,5 +366,44 @@ export function useGitHubRepository(owner: string, name: string, token?: string 
       return fetchGitHubAPI(query, { owner, name }, token);
     },
     enabled: Boolean(owner) && Boolean(name) && Boolean(token),
+  });
+}
+
+export function useAddDiscussionComment() {
+  return useMutation({
+    mutationFn: async ({ 
+      discussionId, 
+      body, 
+      token 
+    }: { 
+      discussionId: string; 
+      body: string; 
+      token?: string | null 
+    }) => {
+      if (!token) {
+        throw new Error('GitHub token is required for this operation');
+      }
+
+      const query = `
+        mutation AddDiscussionComment($discussionId: ID!, $body: String!) {
+          addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
+            comment {
+              id
+              author {
+                login
+                avatarUrl
+                url
+              }
+              bodyHTML
+              createdAt
+              upvoteCount
+            }
+          }
+        }
+      `;
+
+      console.log('Adding comment to discussion:', discussionId);
+      return fetchGitHubAPI(query, { discussionId, body }, token);
+    }
   });
 }

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageSquare, User, ArrowUp } from 'lucide-react';
+import { MessageSquare, User, ArrowUp, CheckCircle2, Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
       <div className="flex items-center gap-2 mb-6">
         <MessageSquare size={18} />
         <h3 className="text-lg font-medium">
-          Comments ({comments.totalCount})
+          Comments ({comments.totalCount + comments.nodes.filter((c: any) => c.isOptimistic).length})
         </h3>
       </div>
       
@@ -36,7 +36,10 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
       ) : (
         <div className="space-y-4">
           {comments.nodes.map((comment: any) => (
-            <Card key={comment.id} className="border">
+            <Card 
+              key={comment.id} 
+              className={`border ${comment.isOptimistic ? 'bg-muted/10 border-dashed' : ''}`}
+            >
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -53,8 +56,17 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
                       >
                         {comment.author.login}
                       </a>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}</span>
+                        {comment.isOptimistic && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Loader2 size={10} className="animate-spin" />
+                              Posting...
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
