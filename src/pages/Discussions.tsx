@@ -1,15 +1,18 @@
 
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import RepoSidebar from '@/components/layout/RepoSidebar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import DiscussionList from '@/components/discussions/DiscussionList';
+import DiscussionDetail from '@/components/discussions/DiscussionDetail';
 
 const Discussions = () => {
   const { activeRepository, activeCategory } = useRepo();
   const { user } = useAuth();
+  const { discussionNumber } = useParams<{ discussionNumber: string }>();
   
   return (
     <SidebarProvider>
@@ -43,13 +46,11 @@ const Discussions = () => {
               </div>
             </div>
             
-            <div className="bg-muted/40 rounded-lg p-12 text-center">
-              <h3 className="text-xl font-medium mb-2">Discussions Coming Soon</h3>
-              <p className="text-muted-foreground mb-6">
-                Discussion list will be implemented in the next epic.
-              </p>
-              <Button>Back to Repositories</Button>
-            </div>
+            {discussionNumber ? (
+              <DiscussionDetail />
+            ) : (
+              <DiscussionList />
+            )}
           </div>
         </div>
       </div>

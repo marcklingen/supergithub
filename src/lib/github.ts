@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -131,6 +132,154 @@ export function useRepositoryDiscussionCategories(owner: string, name: string, t
       return fetchGitHubAPI(query, { owner, name }, token);
     },
     enabled: Boolean(owner) && Boolean(name) && Boolean(token),
+  });
+}
+
+// New query hook for discussions list with pagination
+export function useRepositoryDiscussions(
+  owner: string, 
+  name: string, 
+  categoryId: string,
+  first: number = 10,
+  after?: string,
+  token?: string | null
+) {
+  return useQuery({
+    queryKey: ['repositoryDiscussions', owner, name, categoryId, first, after, token],
+    queryFn: async () => {
+      const query = `
+        query GetRepositoryDiscussions(
+          $owner: String!, 
+          $name: String!, 
+          $categoryId: ID!, 
+          $first: Int!, 
+          $after: String
+        ) {
+          repository(owner: $owner, name: $name) {
+            discussions(
+              first: $first, 
+              after: $after, 
+              categoryId: $categoryId,
+              orderBy: {field: UPDATED_AT, direction: DESC}
+            ) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              totalCount
+              nodes {
+                id
+                number
+                title
+                createdAt
+                updatedAt
+                upvoteCount
+                author {
+                  login
+                  avatarUrl
+                }
+                comments {
+                  totalCount
+                }
+                labels(first: 5) {
+                  nodes {
+                    id
+                    name
+                    color
+                  }
+                }
+                category {
+                  id
+                  name
+                  emoji
+                }
+              }
+            }
+          }
+        }
+      `;
+      
+      return fetchGitHubAPI(
+        query, 
+        { 
+          owner, 
+          name, 
+          categoryId, 
+          first, 
+          after: after || null 
+        }, 
+        token
+      );
+    },
+    enabled: Boolean(owner) && Boolean(name) && Boolean(categoryId) && Boolean(token),
+  });
+}
+
+// New query hook for single discussion details
+export function useDiscussionDetails(
+  owner: string, 
+  name: string, 
+  number: number,
+  token?: string | null
+) {
+  return useQuery({
+    queryKey: ['discussionDetails', owner, name, number, token],
+    queryFn: async () => {
+      const query = `
+        query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
+          repository(owner: $owner, name: $name) {
+            discussion(number: $number) {
+              id
+              number
+              title
+              bodyHTML
+              createdAt
+              updatedAt
+              upvoteCount
+              author {
+                login
+                avatarUrl
+                url
+              }
+              category {
+                id
+                name
+                emoji
+              }
+              comments(first: 50) {
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+                totalCount
+                nodes {
+                  id
+                  author {
+                    login
+                    avatarUrl
+                    url
+                  }
+                  bodyHTML
+                  createdAt
+                  upvoteCount
+                  replyTo {
+                    id
+                  }
+                  reactions(first: 10) {
+                    nodes {
+                      content
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+      
+      return fetchGitHubAPI(query, { owner, name, number }, token);
+    },
+    enabled: Boolean(owner) && Boolean(name) && Boolean(number) && Boolean(token),
   });
 }
 
