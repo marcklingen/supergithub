@@ -28,7 +28,9 @@ import {
   Info,
   Building2,
   Copy,
-  Key
+  Key,
+  Shield,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -85,22 +87,18 @@ const Repositories = () => {
     console.log("GitHub repos error:", isReposError ? error : null);
   }, [githubRepos, isReposError, error]);
 
-  // Function to extract all repositories with discussions enabled from both personal and organization repos
   const getReposWithDiscussions = () => {
     if (!githubRepos?.viewer) return [];
     
-    // Get personal repos with discussions enabled
     const personalRepos = githubRepos.viewer.repositories?.nodes
       ?.filter((repo: any) => repo.hasDiscussionsEnabled) || [];
     
-    // Get organization repos with discussions enabled
     const orgRepos = githubRepos.viewer.organizations?.nodes
       ?.flatMap((org: any) => 
         org.repositories?.nodes
           ?.filter((repo: any) => repo.hasDiscussionsEnabled) || []
       ) || [];
     
-    // Combine and return unique repositories
     return [...personalRepos, ...orgRepos];
   };
 
@@ -179,6 +177,14 @@ const Repositories = () => {
       return;
     }
 
+    if (!manualTokenInput.startsWith('ghp_') && !manualTokenInput.startsWith('github_pat_')) {
+      toast({
+        title: "Warning",
+        description: "GitHub tokens typically start with 'ghp_' or 'github_pat_'. Please check your token.",
+        variant: "warning"
+      });
+    }
+
     setManualGithubToken(manualTokenInput.trim());
     setTokenDialogOpen(false);
     setManualTokenInput('');
@@ -209,72 +215,175 @@ const Repositories = () => {
           Connect GitHub repositories to manage their discussions
         </p>
         
-        {debugMode && (
-          <Alert className="mb-8" variant={githubToken ? "default" : "destructive"}>
-            <AlertCircle className="h-4 w-4" />
+        <Card className="mb-8 border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" /> 
+              GitHub Token Status
+            </CardTitle>
+            <CardDescription>
+              A GitHub token with proper scopes is required to access and interact with discussions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {githubToken ? (
+              <div>
+                <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900">
+                  <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <AlertTitle className="text-green-800 dark:text-green-400">GitHub Token Available</AlertTitle>
+                  <AlertDescription className="text-green-700 dark:text-green-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p>Your GitHub token is set and ready to use.</p>
+                        <p className="text-xs mt-1">Token starts with: {githubToken.substring(0, 10)}...</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={copyToken}
+                        >
+                          <Copy size={14} className="mr-1" />
+                          Copy
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setTokenDialogOpen(true)}
+                        >
+                          <Key size={14} className="mr-1" />
+                          Replace
+                        </Button>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+                
+                {isReposError && (
+                  <Alert className="mt-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <AlertTitle className="text-amber-800 dark:text-amber-400">Token Permission Issue</AlertTitle>
+                    <AlertDescription className="text-amber-700 dark:text-amber-500">
+                      <p>Your token may not have the required scopes:</p>
+                      <ul className="list-disc ml-6 mt-1">
+                        <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">repo</code> scope for repository access</li>
+                        <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">write:discussion</code> scope for discussions</li>
+                        <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">write:issue</code> scope may also be needed</li>
+                      </ul>
+                      <div className="mt-3 flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setTokenDialogOpen(true)}
+                        >
+                          <Key size={14} className="mr-1" />
+                          Replace Token
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => window.open("https://github.com/settings/tokens/new", "_blank")}
+                        >
+                          <ExternalLink size={14} className="mr-1" />
+                          Create New Token
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            ) : (
+              <div>
+                <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <AlertTitle className="text-amber-800 dark:text-amber-400">GitHub Token Required</AlertTitle>
+                  <AlertDescription className="text-amber-700 dark:text-amber-500">
+                    <p className="mb-2">You need a GitHub token to access and interact with discussions. This requires:</p>
+                    <ul className="list-disc ml-6 mb-3">
+                      <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">repo</code> scope for repository access</li>
+                      <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">write:discussion</code> scope for discussions</li>
+                      <li><code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">write:issue</code> scope may also be needed</li>
+                    </ul>
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        onClick={() => setTokenDialogOpen(true)}
+                      >
+                        <Key size={14} className="mr-1" />
+                        Set Token Manually
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.open("https://github.com/settings/tokens/new", "_blank")}
+                      >
+                        <ExternalLink size={14} className="mr-1" />
+                        Create Token on GitHub
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigate('/auth')}
+                      >
+                        <Github size={14} className="mr-1" />
+                        Sign in with GitHub
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {debugMode && githubToken && (
+          <Alert className="mb-8" variant="default">
+            <Info className="h-4 w-4" />
             <AlertTitle>GitHub Token Debug Info</AlertTitle>
             <AlertDescription>
-              {githubToken ? (
-                <div>
-                  <div className="flex justify-between items-center">
-                    <p>GitHub token available ✅</p>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={copyToken}
-                      className="ml-2"
-                    >
-                      <Copy size={14} className="mr-1" />
-                      Copy Token
-                    </Button>
-                  </div>
-                  <p className="text-xs mt-2">Token starts with: {githubToken.substring(0, 10)}...</p>
-                  <p className="text-xs mt-1">Token length: {githubToken.length} characters</p>
+              <div>
+                <p className="text-xs mt-2">Token length: {githubToken.length} characters</p>
+                <p className="text-xs mt-1">Session available: {session ? 'Yes' : 'No'}</p>
+                {session && <p className="text-xs mt-1">Session has provider_token: {session.provider_token ? 'Yes' : 'No'}</p>}
+                <p className="text-xs mt-1">User authenticated: {user ? 'Yes' : 'No'}</p>
+                <div className="mt-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => refetch()}
+                  >
+                    Retry API Request
+                  </Button>
                 </div>
-              ) : (
-                <div>
-                  <p>GitHub token missing ❌</p>
-                  <p className="text-xs mt-2">Authentication provider: {user?.app_metadata?.provider || 'Not found'}</p>
-                  <p className="text-xs mt-1">Session available: {session ? 'Yes' : 'No'}</p>
-                  {session && <p className="text-xs mt-1">Session has provider_token: {session.provider_token ? 'Yes' : 'No'}</p>}
-                  <div className="mt-4">
-                    <Button 
-                      size="sm" 
-                      onClick={() => navigate('/auth')}
-                      className="mr-2"
-                    >
-                      Sign in with GitHub
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setTokenDialogOpen(true)}
-                      className="mr-2"
-                    >
-                      <Key size={14} className="mr-1" />
-                      Set Token Manually
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => refetch()}
-                    >
-                      Retry Fetching
-                    </Button>
-                  </div>
-                </div>
-              )}
+              </div>
             </AlertDescription>
           </Alert>
         )}
         
-        {/* Token Input Dialog */}
         <Dialog open={tokenDialogOpen} onOpenChange={setTokenDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Set GitHub Token Manually</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Set GitHub Token Manually
+              </DialogTitle>
               <DialogDescription>
-                Enter your GitHub personal access token. This will be stored locally in your browser.
+                <p className="mb-4">
+                  Enter your GitHub personal access token with the following scopes:
+                </p>
+                <div className="bg-muted p-3 rounded-md mb-4">
+                  <ol className="list-decimal pl-5 space-y-2 text-sm">
+                    <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 inline-flex">
+                      GitHub Token Settings <ExternalLink size={12} />
+                    </a></li>
+                    <li>Enter a note like "SuperGitHub Discussions"</li>
+                    <li>Set an expiration if desired</li>
+                    <li>Check these scopes:
+                      <ul className="list-disc pl-5 mt-1">
+                        <li><code className="bg-background px-1 py-0.5 rounded">repo</code> (full control of repositories)</li>
+                        <li><code className="bg-background px-1 py-0.5 rounded">write:discussion</code> (for discussions)</li>
+                        <li><code className="bg-background px-1 py-0.5 rounded">write:issue</code> (may also be needed)</li>
+                      </ul>
+                    </li>
+                    <li>Click "Generate token" and copy the generated token</li>
+                  </ol>
+                </div>
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
@@ -283,14 +392,10 @@ const Repositories = () => {
                 value={manualTokenInput}
                 onChange={(e) => setManualTokenInput(e.target.value)}
                 className="mb-2"
+                type="password"
               />
               <p className="text-xs text-muted-foreground mt-2">
-                Your token needs at least <code>repo</code> and <code>read:discussion</code> scopes.
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  Create a new token on GitHub ↗
-                </a>
+                Your token is stored locally in your browser and is never sent to our servers.
               </p>
             </div>
             <DialogFooter>
@@ -387,14 +492,14 @@ const Repositories = () => {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>GitHub Authentication Required</AlertTitle>
                     <AlertDescription>
-                      <p>To see your GitHub repositories, you need to authenticate with GitHub.</p>
+                      <p>To see your GitHub repositories, you need to provide a GitHub token.</p>
                       <Button 
                         className="mt-2" 
                         size="sm" 
-                        onClick={() => navigate('/auth')}
+                        onClick={() => setTokenDialogOpen(true)}
                       >
-                        <Github size={14} className="mr-2" />
-                        Sign in with GitHub
+                        <Key size={14} className="mr-2" />
+                        Set GitHub Token
                       </Button>
                     </AlertDescription>
                   </Alert>
