@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -56,14 +55,13 @@ const DiscussionDetail = () => {
     activeRepository?.owner || '',
     activeRepository?.name || '',
     activeCategory?.id || '',
-    50, // Fetch more discussions to have a complete list for navigation
+    50,
     undefined,
     githubToken
   );
   
   const discussions = discussionsData?.repository?.discussions?.nodes || [];
   
-  // Find the current index
   const currentIndex = discussions.findIndex(
     (discussion) => discussion.number === discussionNumber
   );
@@ -199,14 +197,15 @@ const DiscussionDetail = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="shortcut"
                   size="sm"
                   onClick={() => navigateTo(prevDiscussion)}
                   disabled={!prevDiscussion}
+                  className="shadow-sm"
                 >
-                  <ArrowUp className="h-4 w-4" />
-                  <span className="sr-only">Previous discussion</span>
-                  <kbd className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">k</kbd>
+                  <ArrowUp className="h-4 w-4 mr-1" />
+                  <span className="sr-only md:not-sr-only md:inline-block">Previous</span>
+                  <kbd className="hidden md:inline-block">k</kbd>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -219,14 +218,15 @@ const DiscussionDetail = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="shortcut"
                   size="sm"
                   onClick={() => navigateTo(nextDiscussion)}
                   disabled={!nextDiscussion}
+                  className="shadow-sm"
                 >
-                  <ArrowDown className="h-4 w-4" />
-                  <span className="sr-only">Next discussion</span>
-                  <kbd className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">j</kbd>
+                  <ArrowDown className="h-4 w-4 mr-1" />
+                  <span className="sr-only md:not-sr-only md:inline-block">Next</span>
+                  <kbd className="hidden md:inline-block">j</kbd>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -236,14 +236,15 @@ const DiscussionDetail = () => {
           </TooltipProvider>
 
           <Button 
-            variant="outline" 
+            variant="shortcut" 
             size="sm" 
             asChild
+            className="shadow-sm"
           >
             <a href={`https://github.com/${activeRepository?.owner}/${activeRepository?.name}/discussions/${discussion.number}`} target="_blank" rel="noopener noreferrer">
               <Github size={14} className="mr-1.5" />
-              Open on GitHub
-              <kbd className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">o</kbd>
+              <span className="sr-only md:not-sr-only md:inline-block">Open on GitHub</span>
+              <kbd className="hidden md:inline-block">o</kbd>
             </a>
           </Button>
         </div>
@@ -393,3 +394,4 @@ const DiscussionDetail = () => {
 };
 
 export default DiscussionDetail;
+

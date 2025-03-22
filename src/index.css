@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -89,6 +88,15 @@
   .dark .glass {
     @apply bg-black/10 border-white/10;
   }
+  
+  /* Keyboard shortcut styles */
+  kbd {
+    @apply font-mono inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 transition-colors;
+  }
+  
+  button:hover kbd {
+    @apply bg-gray-200 dark:bg-gray-600;
+  }
 }
 
 /* Custom animation utilities */
@@ -107,5 +115,22 @@
   }
   .animation-delay-700 {
     animation-delay: 700ms;
+  }
+  
+  /* Shortcut button styles */
+  .shortcut-btn {
+    @apply bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300 hover:shadow transition-all;
+  }
+  
+  .dark .shortcut-btn {
+    @apply bg-gray-800 text-gray-200 border-gray-700 hover:bg-gray-700 hover:border-gray-600;
+  }
+  
+  .shortcut-btn kbd {
+    @apply ml-1.5 text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded;
+  }
+  
+  .shortcut-btn:hover kbd {
+    @apply bg-gray-200 dark:bg-gray-600;
   }
 }

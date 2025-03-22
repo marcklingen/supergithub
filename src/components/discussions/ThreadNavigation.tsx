@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -89,7 +90,7 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="shortcut"
               size="icon"
               onClick={() => navigateTo(prevDiscussion)}
               disabled={!prevDiscussion}
@@ -107,7 +108,7 @@ const ThreadNavigation: React.FC<ThreadNavigationProps> = ({ currentDiscussionNu
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="shortcut"
               size="icon"
               onClick={() => navigateTo(nextDiscussion)}
               disabled={!nextDiscussion}
