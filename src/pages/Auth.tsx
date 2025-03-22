@@ -131,12 +131,12 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Use minimal scopes to reduce permission issues
+      // Use user:email scope to ensure we get access to the user's email
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
           redirectTo: window.location.origin,
-          scopes: 'read:user'
+          scopes: 'user:email'
         }
       });
 
