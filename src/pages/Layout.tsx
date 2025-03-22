@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Outlet, Navigate, useNavigate } from 'react-router-dom';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import RepoSidebar from '@/components/layout/RepoSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,12 +28,14 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen flex w-full">
-      <RepoSidebar />
-      <div className="flex-1 overflow-auto pt-0">
-        <Outlet />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <RepoSidebar />
+        <div className="flex-1 overflow-auto pt-0">
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
