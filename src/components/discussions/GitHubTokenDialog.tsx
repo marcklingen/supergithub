@@ -42,11 +42,12 @@ const GitHubTokenDialog = ({
           <DialogTitle>Set GitHub Token</DialogTitle>
           <DialogDescription>
             <p className="mb-4">
-              A GitHub token with the <code className="bg-muted px-1 py-0.5 rounded">repo</code> scope is required to access discussions.
+              A GitHub token with the <code className="bg-muted px-1 py-0.5 rounded">repo</code> and{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">write:discussion</code> scopes is required to access discussions.
             </p>
             <ol className="list-decimal pl-5 space-y-2 text-sm">
               <li>Go to <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub Developer Settings</a></li>
-              <li>Create a new token (classic) with the <code className="bg-muted px-1 py-0.5 rounded">repo</code> scope</li>
+              <li>Create a new token (classic) with the <code className="bg-muted px-1 py-0.5 rounded">repo</code> and <code className="bg-muted px-1 py-0.5 rounded">write:discussion</code> scopes</li>
               <li>Copy the generated token and paste it below</li>
             </ol>
           </DialogDescription>
