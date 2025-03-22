@@ -59,6 +59,11 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
       case 'createdAt':
         return 'CREATED_AT';
       case 'updatedAt':
+        return 'UPDATED_AT';
+      case 'upvotes':
+        return 'REACTIONS';
+      case 'comments':
+        return 'COMMENTS';
       default:
         return 'UPDATED_AT';
     }
@@ -283,6 +288,8 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
             <SelectContent>
               <SelectItem value="updatedAt">Last Updated</SelectItem>
               <SelectItem value="createdAt">Created Date</SelectItem>
+              <SelectItem value="upvotes">Most Upvotes</SelectItem>
+              <SelectItem value="comments">Most Comments</SelectItem>
             </SelectContent>
           </Select>
           

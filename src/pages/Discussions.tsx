@@ -11,7 +11,7 @@ import EmptyRepositoryState from '@/components/discussions/EmptyRepositoryState'
 import TokenRequiredState from '@/components/discussions/TokenRequiredState';
 import DiscussionHeader from '@/components/discussions/DiscussionHeader';
 import KeyboardShortcutBar from '@/components/keyboard/KeyboardShortcutBar';
-import { useRepositoryDiscussions, Discussion } from '@/lib/github';
+import { useRepositoryDiscussions, Discussion, SortField, SortOrder } from '@/lib/github';
 
 const Discussions = () => {
   const { activeRepository, activeCategory } = useRepo();
@@ -21,6 +21,10 @@ const Discussions = () => {
   
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
+  
+  // Default sort parameters
+  const defaultSortField: SortField = 'UPDATED_AT';
+  const defaultSortOrder: SortOrder = 'DESC';
   
   // Prefetch discussions when repository and category are selected
   const { data: discussionsData } = useRepositoryDiscussions(
@@ -37,8 +41,8 @@ const Discussions = () => {
               Boolean(githubToken),
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
-    'UPDATED_AT', // Default sort field
-    'DESC'        // Default sort order
+    defaultSortField,
+    defaultSortOrder
   );
   
   useEffect(() => {

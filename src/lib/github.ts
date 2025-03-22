@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -111,7 +110,7 @@ export interface DiscussionDetailsResponse {
 }
 
 // Add types for sort field and order
-export type SortField = 'CREATED_AT' | 'UPDATED_AT';
+export type SortField = 'CREATED_AT' | 'UPDATED_AT' | 'COMMENTS' | 'REACTIONS';
 export type SortOrder = 'ASC' | 'DESC';
 
 // Make queryClient globally accessible for prefetching
