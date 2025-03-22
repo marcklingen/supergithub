@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,9 +24,15 @@ import {
   Trash2, 
   Check, 
   Github,
-  MessageSquare 
+  MessageSquare,
+  Info
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 
 const Repositories = () => {
   const [repoInput, setRepoInput] = useState('');
@@ -35,21 +41,28 @@ const Repositories = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Explicitly log token to help with debugging
+  const [debugMode, setDebugMode] = useState(false);
   const token = user?.user_metadata?.provider_token;
-  console.log("GitHub token available:", !!token); // Debug log
   
-  // Make sure we pass the token to useUserRepositories
+  useEffect(() => {
+    console.log("GitHub token available:", !!token);
+    if (!token) {
+      console.log("User metadata:", user?.user_metadata);
+    }
+  }, [token, user]);
+  
   const { 
     data: githubRepos, 
     isLoading: isLoadingRepos, 
     isError: isReposError,
-    error
+    error,
+    refetch
   } = useUserRepositories(token);
   
-  // Debug log to check what's coming back
-  console.log("GitHub repos response:", githubRepos);
-  console.log("GitHub repos error:", isReposError ? error : null);
+  useEffect(() => {
+    console.log("GitHub repos response:", githubRepos);
+    console.log("GitHub repos error:", isReposError ? error : null);
+  }, [githubRepos, isReposError, error]);
 
   const handleAddRepository = () => {
     if (!repoInput.trim()) {
@@ -111,10 +124,56 @@ const Repositories = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-24 max-w-7xl">
-        <h1 className="text-3xl font-bold mb-2">Repository Management</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold">Repository Management</h1>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setDebugMode(!debugMode)}
+            title="Toggle debug information"
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
         <p className="text-muted-foreground mb-8">
           Connect GitHub repositories to manage their discussions
         </p>
+        
+        {debugMode && (
+          <Alert className="mb-8" variant={token ? "default" : "destructive"}>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>GitHub Token Status</AlertTitle>
+            <AlertDescription>
+              {token ? (
+                <div>
+                  <p>GitHub token available ✅</p>
+                  <p className="text-xs mt-2">Token starts with: {token.substring(0, 10)}...</p>
+                </div>
+              ) : (
+                <div>
+                  <p>GitHub token missing ❌</p>
+                  <p className="text-xs mt-2">Authentication provider: {user?.app_metadata?.provider || 'Not found'}</p>
+                  <div className="mt-4">
+                    <Button 
+                      size="sm" 
+                      onClick={() => navigate('/auth')}
+                      className="mr-2"
+                    >
+                      Sign in with GitHub
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => refetch()}
+                    >
+                      Retry Fetching
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid md:grid-cols-2 gap-8">
           <div>
@@ -198,6 +257,24 @@ const Repositories = () => {
               </CardHeader>
               
               <CardContent>
+                {!token && (
+                  <Alert variant="warning" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>GitHub Authentication Required</AlertTitle>
+                    <AlertDescription>
+                      <p>To see your GitHub repositories, you need to authenticate with GitHub.</p>
+                      <Button 
+                        className="mt-2" 
+                        size="sm" 
+                        onClick={() => navigate('/auth')}
+                      >
+                        <Github size={14} className="mr-2" />
+                        Sign in with GitHub
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
                 {isLoadingRepos ? (
                   <div className="py-8 flex justify-center">
                     <Loader2 className="animate-spin text-muted-foreground" />
@@ -209,8 +286,18 @@ const Repositories = () => {
                       <div>
                         <p>Failed to load your GitHub repositories</p>
                         <p className="text-sm mt-1">
-                          Please check your GitHub token permissions or connection
+                          {(error as Error)?.message || 'Please check your GitHub token permissions or connection'}
                         </p>
+                        {debugMode && (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="mt-2"
+                            onClick={() => refetch()}
+                          >
+                            Retry
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

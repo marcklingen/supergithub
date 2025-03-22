@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,12 +77,12 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Make sure to request 'repo' scope to get repository access
+      // Make sure to request the proper scopes for repository access
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
           redirectTo: window.location.origin + '/auth', // Explicitly redirect to the /auth route
-          scopes: 'repo read:user user:email' // Ensure repo scope is included
+          scopes: 'repo read:user user:email', // Request repo scope for accessing private repos
         }
       });
 
