@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { User, ArrowUp, Reply, MessageSquareReply } from 'lucide-react';
+import { User, ArrowUp, MessageSquareReply } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -73,7 +73,8 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
               </div>
             </div>
             
-            {onReplyClick && (
+            {/* Only show reply button if this is a first-level comment (depth = 0) */}
+            {onReplyClick && depth === 0 && (
               <Button 
                 size="sm" 
                 variant="ghost" 
