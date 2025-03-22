@@ -76,6 +76,16 @@ const DiscussionList = () => {
   const totalCount = data?.repository?.discussions?.totalCount || 0;
   
   useEffect(() => {
+    setCursor(undefined);
+    setAllDiscussions([]);
+    setSelectedIndex(-1);
+    
+    if (activeCategory?.id && activeRepository?.owner && activeRepository?.name) {
+      refetch();
+    }
+  }, [activeCategory?.id, activeRepository?.owner, activeRepository?.name, refetch]);
+  
+  useEffect(() => {
     if (discussions.length > 0) {
       if (cursor) {
         setAllDiscussions(prev => {
