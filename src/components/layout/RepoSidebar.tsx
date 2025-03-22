@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { convertEmojiText } from '@/lib/utils';
 
 const RepoSidebar = () => {
   const { activeRepository, repositories, setActiveRepository, setActiveCategory, activeCategory } = useRepo();
@@ -279,7 +280,7 @@ const RepoSidebar = () => {
                       `}
                     >
                       <span className="text-base" role="img" aria-label={category.name}>
-                        {category.emoji}
+                        {convertEmojiText(category.emoji)}
                       </span>
                       <span className="truncate">{category.name}</span>
                     </button>
