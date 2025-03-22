@@ -10,6 +10,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -266,24 +267,6 @@ const Repositories = () => {
                   </Alert>
                 )}
                 
-                {githubRepos?._orgAccessError && (
-                  <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
-                    <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <AlertTitle className="text-amber-800 dark:text-amber-400">Limited Access Permissions</AlertTitle>
-                    <AlertDescription className="text-amber-700 dark:text-amber-500">
-                      <p>Your GitHub token doesn't have organization access. Only personal repositories are displayed.</p>
-                      <Button 
-                        className="mt-2 bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-700 dark:hover:bg-amber-600"
-                        size="sm" 
-                        onClick={handleReauthWithOrgAccess}
-                      >
-                        <RotateCcw size={14} className="mr-2" />
-                        Update Permissions
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
                 {isLoadingRepos ? (
                   <div className="py-8 flex justify-center">
                     <Loader2 className="animate-spin text-muted-foreground" />
@@ -314,11 +297,8 @@ const Repositories = () => {
                       <TabsList>
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="personal">Personal</TabsTrigger>
-                        <TabsTrigger value="organization" disabled={githubRepos?._orgAccessError}>
+                        <TabsTrigger value="organization">
                           Organization
-                          {githubRepos?._orgAccessError && (
-                            <span className="ml-1 text-xs text-amber-500">⚠️</span>
-                          )}
                         </TabsTrigger>
                       </TabsList>
                     </div>
@@ -495,19 +475,12 @@ const Repositories = () => {
                     
                     <TabsContent value="organization" className="space-y-4">
                       {githubRepos?._orgAccessError ? (
-                        <div className="rounded-md p-8 text-center border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
-                          <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-amber-500 dark:text-amber-400" />
-                          <h3 className="text-lg font-medium text-amber-800 dark:text-amber-400 mb-2">Organization Access Required</h3>
-                          <p className="text-amber-700 dark:text-amber-500 mb-4">
-                            Your GitHub token doesn't have the required permissions to access organization repositories.
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Building2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                          <p>Limited access to organization repositories</p>
+                          <p className="text-sm mt-2">
+                            You can only see repositories from organizations that have granted you access
                           </p>
-                          <Button 
-                            onClick={handleReauthWithOrgAccess}
-                            className="bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-700 dark:hover:bg-amber-600"
-                          >
-                            <RotateCcw size={16} className="mr-2" />
-                            Update GitHub Permissions
-                          </Button>
                         </div>
                       ) : (
                         <>
@@ -606,12 +579,6 @@ const Repositories = () => {
                   </Tabs>
                 )}
               </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+              
+              {
 
-export default Repositories;

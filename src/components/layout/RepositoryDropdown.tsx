@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
-import { FolderKanban } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -29,7 +29,7 @@ const RepositoryDropdown: React.FC = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
             <div className="flex items-center gap-2 truncate">
-              <FolderKanban size={16} />
+              <Github size={16} />
               <span className="truncate">
                 {activeRepository?.fullName || 'Select Repository'}
               </span>
@@ -47,7 +47,7 @@ const RepositoryDropdown: React.FC = () => {
                 className={activeRepository?.fullName === repo.fullName ? 'bg-accent' : ''}
               >
                 <div className="flex items-center gap-2 w-full truncate">
-                  <FolderKanban size={16} />
+                  <Github size={16} />
                   <span className="truncate">{repo.fullName}</span>
                 </div>
               </DropdownMenuItem>
@@ -56,7 +56,7 @@ const RepositoryDropdown: React.FC = () => {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => navigate('/repositories')}>
             <div className="flex items-center gap-2 w-full">
-              <FolderKanban size={16} />
+              <Github size={16} />
               <span>Manage Repositories</span>
             </div>
           </DropdownMenuItem>
