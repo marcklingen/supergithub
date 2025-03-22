@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { ExternalLink, Key } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface GitHubTokenDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ const GitHubTokenDialog = ({
   tokenInput,
   setTokenInput
 }: GitHubTokenDialogProps) => {
+  const navigate = useNavigate();
   
   const handleSetToken = () => {
     if (!tokenInput.trim()) {
@@ -43,6 +45,11 @@ const GitHubTokenDialog = ({
     }
     
     onSetToken(tokenInput.trim());
+  };
+
+  const handleReauthWithOrgAccess = () => {
+    onOpenChange(false); // Close the dialog
+    navigate('/auth?reauth=true&scope=read:org');
   };
   
   return (
@@ -99,6 +106,19 @@ const GitHubTokenDialog = ({
             <p className="text-xs text-muted-foreground">
               Your token is stored locally in your browser and is never sent to our servers.
             </p>
+          </div>
+          <div className="pt-2 flex flex-col space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Alternatively, if you signed in with GitHub OAuth and need organization access:
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleReauthWithOrgAccess}
+              className="self-start"
+            >
+              Reconnect with Organization Access
+            </Button>
           </div>
         </div>
         <DialogFooter>

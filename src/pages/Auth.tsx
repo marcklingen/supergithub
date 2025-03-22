@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2, AlertTriangle } from 'lucide-react';
+import { GithubIcon, Loader2, AlertTriangle, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -27,7 +26,9 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isDevMode, setIsDevMode] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isReauthMode, setIsReauthMode] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
@@ -48,6 +49,23 @@ const Auth = () => {
     console.log('Development mode:', isDevelopment);
   }, []);
 
+  // Check if this is a reauthentication request with expanded scopes
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const reauth = searchParams.get('reauth');
+    const scope = searchParams.get('scope');
+    
+    if (reauth === 'true') {
+      setIsReauthMode(true);
+      
+      // Clean the URL but keep the reauth parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('error');
+      newUrl.searchParams.delete('error_description');
+      window.history.replaceState({}, document.title, newUrl.toString());
+    }
+  }, [location]);
+
   // Extract error from URL if present
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -57,20 +75,23 @@ const Auth = () => {
     if (error) {
       setLoginError(errorDescription?.replace(/\+/g, ' ') || "There was an error during authentication");
       
-      // Clean the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Clean the URL but keep the reauth parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('error');
+      newUrl.searchParams.delete('error_description');
+      window.history.replaceState({}, document.title, newUrl.toString());
     }
   }, [toast]);
 
-  // Redirect if user is already logged in
+  // Redirect if user is already logged in and not in reauth mode
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && !isReauthMode) {
       console.log('User already logged in, redirecting to repositories');
       navigate('/repositories');
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, isReauthMode]);
 
-  async function handleGitHubSignIn() {
+  async function handleGitHubSignIn(withExpandedScopes = false) {
     try {
       // Clear any previous errors
       setLoginError(null);
@@ -81,14 +102,22 @@ const Auth = () => {
       }
       
       setLoading(true);
-      console.log('Initiating GitHub sign-in');
+      console.log('Initiating GitHub sign-in', withExpandedScopes ? 'with expanded scopes' : '');
       
-      // Updated scopes to include write:issue permission
+      // Base scopes
+      let scopes = 'repo read:user user:email write:discussion write:issue';
+      
+      // Add read:org scope when explicitly requested
+      if (withExpandedScopes) {
+        scopes += ' read:org';
+        console.log('Adding read:org scope for organization access');
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/auth`, // Explicitly redirect to the /auth route
-          scopes: 'repo read:user user:email write:discussion write:issue', // Added write:issue scope
+          scopes: scopes,
         }
       });
 
@@ -154,13 +183,32 @@ const Auth = () => {
     }
   }
 
+  async function handleSignOutAndReauth() {
+    try {
+      setLoading(true);
+      // Sign out first
+      await supabase.auth.signOut();
+      // Then redirect to auth with reauth parameter
+      window.location.href = '/auth?reauth=true';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      setLoginError("Failed to sign out before reauthentication");
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome to SuperGitHub</CardTitle>
+          <CardTitle className="text-2xl">
+            {isReauthMode ? "Expand GitHub Permissions" : "Welcome to SuperGitHub"}
+          </CardTitle>
           <CardDescription>
-            Sign in with your {isDevMode ? "GitHub account or credentials" : "GitHub account"} to access discussions with superpowers
+            {isReauthMode 
+              ? "Sign in with GitHub to grant additional permissions for accessing organization repositories"
+              : `Sign in with your ${isDevMode ? "GitHub account or credentials" : "GitHub account"} to access discussions with superpowers`
+            }
           </CardDescription>
         </CardHeader>
         
@@ -173,21 +221,62 @@ const Auth = () => {
             </Alert>
           )}
           
-          <Button 
-            variant="outline" 
-            className="w-full justify-center gap-2" 
-            onClick={handleGitHubSignIn}
-            disabled={loading || authLoading}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <GithubIcon size={16} className="mr-2" />
-            )}
-            <span>{loading ? 'Signing in...' : 'Sign in with GitHub'}</span>
-          </Button>
+          {isReauthMode && (
+            <Alert variant="info" className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Additional Permissions Needed</AlertTitle>
+              <AlertDescription>
+                To access your organization repositories, you need to grant the <code className="px-1 py-0.5 bg-background/30 rounded">read:org</code> permission.
+                This will allow SuperGitHub to list and access discussions in your organization's repositories.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {isReauthMode ? (
+            <Button 
+              variant="outline" 
+              className="w-full justify-center gap-2" 
+              onClick={() => handleGitHubSignIn(true)}
+              disabled={loading || authLoading}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <GithubIcon size={16} className="mr-2" />
+              )}
+              <span>{loading ? 'Signing in...' : 'Sign in with GitHub (with org access)'}</span>
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              className="w-full justify-center gap-2" 
+              onClick={() => handleGitHubSignIn()}
+              disabled={loading || authLoading}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <GithubIcon size={16} className="mr-2" />
+              )}
+              <span>{loading ? 'Signing in...' : 'Sign in with GitHub'}</span>
+            </Button>
+          )}
+          
+          {user && !isReauthMode && (
+            <div className="pt-2">
+              <Button 
+                variant="outline" 
+                className="w-full justify-center gap-2 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                onClick={handleSignOutAndReauth}
+                disabled={loading}
+              >
+                <GithubIcon size={16} className="mr-2" />
+                <span>Reconnect GitHub with expanded permissions</span>
+              </Button>
+            </div>
+          )}
 
-          {isDevMode && (
+          {isDevMode && !isReauthMode && (
             <div className="pt-4 space-y-4">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -263,9 +352,11 @@ const Auth = () => {
         </CardContent>
         
         <CardFooter className="flex justify-center text-xs text-muted-foreground">
-          {isDevMode ? 
+          {isReauthMode ? 
+            "You need to grant organization access permissions to view organization repositories" : 
+            (isDevMode ? 
             "Development environment: Email/password is available" : 
-            "Requires GitHub account with repositories that have discussions enabled"}
+            "Requires GitHub account with repositories that have discussions enabled")}
         </CardFooter>
       </Card>
     </div>
