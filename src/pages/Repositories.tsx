@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -27,7 +26,9 @@ import {
   Github,
   MessageSquare,
   Info,
-  Building2
+  Building2,
+  Copy,
+  Key
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -50,6 +51,7 @@ const Repositories = () => {
   const navigate = useNavigate();
   
   const [debugMode, setDebugMode] = useState(true);
+  const [showFullToken, setShowFullToken] = useState(false);
   
   useEffect(() => {
     console.log("GitHub token available:", !!githubToken);
@@ -147,6 +149,22 @@ const Repositories = () => {
     }
   };
 
+  const copyToken = () => {
+    if (githubToken) {
+      navigator.clipboard.writeText(githubToken);
+      toast({
+        title: "Token copied",
+        description: "GitHub token copied to clipboard"
+      });
+    } else {
+      toast({
+        title: "No token available",
+        description: "Please sign in with GitHub to get a token",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -167,10 +185,76 @@ const Repositories = () => {
           Connect GitHub repositories to manage their discussions
         </p>
         
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              GitHub Token Status
+            </CardTitle>
+            <CardDescription>
+              Your GitHub access token is used to authenticate with the GitHub API
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {githubToken ? (
+              <div>
+                <div className="bg-muted p-4 rounded-md mb-4 flex items-center justify-between">
+                  <div className="font-mono text-sm break-all mr-4">
+                    {showFullToken 
+                      ? githubToken 
+                      : `${githubToken.substring(0, 10)}...${githubToken.substring(githubToken.length - 4)}`}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowFullToken(!showFullToken)}
+                    >
+                      {showFullToken ? "Hide" : "Show"}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={copyToken}
+                    >
+                      <Copy size={14} className="mr-1" />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>Token length: {githubToken.length} characters</li>
+                    <li>This token expires after some time. If you encounter API errors, try signing out and in again.</li>
+                    <li>The token is stored only in your browser and is never sent to our servers.</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>GitHub token is missing</AlertTitle>
+                  <AlertDescription>
+                    You need to sign in with GitHub to use this application.
+                  </AlertDescription>
+                </Alert>
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="mr-2"
+                >
+                  <Github size={16} className="mr-2" />
+                  Sign in with GitHub
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
         {debugMode && (
           <Alert className="mb-8" variant={githubToken ? "default" : "destructive"}>
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>GitHub Token Status</AlertTitle>
+            <AlertTitle>GitHub Token Debug Info</AlertTitle>
             <AlertDescription>
               {githubToken ? (
                 <div>

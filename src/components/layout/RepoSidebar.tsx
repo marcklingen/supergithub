@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRepo, DiscussionCategory } from '@/contexts/RepoContext';
@@ -276,15 +275,6 @@ const RepoSidebar = () => {
               >
                 <MessageSquare size={16} />
                 <span>Discussions</span>
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/github-token" 
-                className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <Copy size={16} />
-                <span>GitHub Token</span>
               </Link>
             </li>
           </ul>
