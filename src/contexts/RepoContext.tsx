@@ -1,6 +1,5 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 export interface Repository {
@@ -43,7 +42,6 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
   const [activeCategory, setActiveCategory] = useState<DiscussionCategory | null>(null);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   // Load active repository from localStorage on initial render
   useEffect(() => {
@@ -73,13 +71,6 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
     setActiveCategory(null);
     setCategories([]);
   }, [activeRepository]);
-
-  // Redirect to repo selection if no repositories and user is logged in
-  useEffect(() => {
-    if (user && repositories.length === 0) {
-      navigate('/repositories');
-    }
-  }, [user, repositories.length, navigate]);
 
   const addRepository = (ownerName: string) => {
     // Parse owner/name format
