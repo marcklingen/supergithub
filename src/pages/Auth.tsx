@@ -20,13 +20,25 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+// Schema for password reset form validation
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 type LoginFormValues = z.infer<typeof loginSchema>;
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isDevMode, setIsDevMode] = useState(false);
   const [searchParams] = useSearchParams();
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [showPasswordResetForm, setShowPasswordResetForm] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -35,6 +47,14 @@ const Auth = () => {
     defaultValues: {
       email: '',
       password: '',
+    },
+  });
+
+  const resetPasswordForm = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
     },
   });
 
@@ -54,20 +74,17 @@ const Auth = () => {
     if (hash && hash.includes('#access_token=')) {
       // Parse the hash fragment
       const hashParams = new URLSearchParams(hash.substring(1));
-      const accessToken = hashParams.get('access_token');
+      const token = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
       const type = hashParams.get('type');
       
-      if (accessToken && type === 'recovery') {
-        // Handle password recovery flow
-        setResetSuccess(true);
+      if (token && type === 'recovery') {
+        console.log('Password reset token detected');
+        setAccessToken(token);
+        setShowPasswordResetForm(true);
+        
         // Clean the URL and remove hash
         window.history.replaceState({}, document.title, window.location.pathname);
-        
-        toast({
-          title: "Password Reset Successful",
-          description: "You can now log in with your new password",
-        });
       }
     }
   }, [toast]);
@@ -205,6 +222,39 @@ const Auth = () => {
     }
   }
 
+  // Handle setting a new password
+  async function handleSetNewPassword(values: ResetPasswordFormValues) {
+    try {
+      setLoading(true);
+      
+      if (!accessToken) {
+        throw new Error("Reset token is missing");
+      }
+      
+      const { error } = await supabase.auth.updateUser({
+        password: values.password
+      });
+
+      if (error) throw error;
+      
+      setResetSuccess(true);
+      setShowPasswordResetForm(false);
+      
+      toast({
+        title: "Password Reset Successful",
+        description: "You can now log in with your new password",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error resetting password",
+        description: error.message || "An error occurred while resetting your password",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // Show reset password form
   const [showResetForm, setShowResetForm] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -229,144 +279,204 @@ const Auth = () => {
             </Alert>
           )}
 
-          <Button 
-            variant="outline" 
-            className="w-full justify-center gap-2" 
-            onClick={handleGitHubSignIn}
-            disabled={loading}
-          >
-            {loading && !showResetForm ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <GithubIcon size={16} className="mr-2" />
-            )}
-            <span>{loading && !showResetForm ? 'Signing in...' : 'Sign in with GitHub'}</span>
-          </Button>
+          {showPasswordResetForm ? (
+            <div className="space-y-4">
+              <Alert>
+                <AlertTitle>Set New Password</AlertTitle>
+                <AlertDescription>
+                  Please enter your new password below.
+                </AlertDescription>
+              </Alert>
+              
+              <Form {...resetPasswordForm}>
+                <form className="space-y-4" onSubmit={resetPasswordForm.handleSubmit(handleSetNewPassword)}>
+                  <FormField
+                    control={resetPasswordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={resetPasswordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <span>Setting New Password...</span>
+                      </>
+                    ) : (
+                      <span>Set New Password</span>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </div>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                className="w-full justify-center gap-2" 
+                onClick={handleGitHubSignIn}
+                disabled={loading}
+              >
+                {loading && !showResetForm ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <GithubIcon size={16} className="mr-2" />
+                )}
+                <span>{loading && !showResetForm ? 'Signing in...' : 'Sign in with GitHub'}</span>
+              </Button>
 
-          {isDevMode && (
-            <div className="pt-4 space-y-4">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t"></span>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Development Mode Options
-                  </span>
-                </div>
-              </div>
-
-              {showResetForm ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email Address</Label>
-                    <Input 
-                      id="reset-email" 
-                      placeholder="email@example.com" 
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                    />
+              {isDevMode && (
+                <div className="pt-4 space-y-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t"></span>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">
+                        Development Mode Options
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="default" 
-                      className="flex-1"
-                      onClick={() => handleResetPassword(resetEmail)}
-                      disabled={loading || !resetEmail}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          <span>Sending...</span>
-                        </>
-                      ) : (
-                        <span>Send Reset Link</span>
-                      )}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => setShowResetForm(false)}
-                      disabled={loading}
-                    >
-                      Back to Login
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <Form {...form}>
-                    <form className="space-y-4" onSubmit={form.handleSubmit(handleEmailSignIn)}>
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="email@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <div className="flex justify-end">
-                        <Button 
-                          type="button" 
-                          variant="link" 
-                          className="text-xs px-0"
-                          onClick={() => setShowResetForm(true)}
-                        >
-                          Forgot password?
-                        </Button>
+                  {showResetForm ? (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">Email Address</Label>
+                        <Input 
+                          id="reset-email" 
+                          placeholder="email@example.com" 
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                        />
                       </div>
-
-                      <div className="flex gap-2 pt-2">
+                      <div className="flex gap-2">
                         <Button 
-                          type="submit" 
-                          disabled={loading}
+                          variant="default" 
                           className="flex-1"
+                          onClick={() => handleResetPassword(resetEmail)}
+                          disabled={loading || !resetEmail}
                         >
                           {loading ? (
                             <>
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              <span>Signing in...</span>
+                              <span>Sending...</span>
                             </>
                           ) : (
-                            <span>Sign In</span>
+                            <span>Send Reset Link</span>
                           )}
                         </Button>
-                        
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={loading}
+                        <Button 
+                          variant="outline" 
                           className="flex-1"
-                          onClick={() => form.handleSubmit(handleEmailSignUp)()}
+                          onClick={() => setShowResetForm(false)}
+                          disabled={loading}
                         >
-                          Sign Up
+                          Back to Login
                         </Button>
                       </div>
-                    </form>
-                  </Form>
-                </>
+                    </div>
+                  ) : (
+                    <>
+                      <Form {...form}>
+                        <form className="space-y-4" onSubmit={form.handleSubmit(handleEmailSignIn)}>
+                          <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="email@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="flex justify-end">
+                            <Button 
+                              type="button" 
+                              variant="link" 
+                              className="text-xs px-0"
+                              onClick={() => setShowResetForm(true)}
+                            >
+                              Forgot password?
+                            </Button>
+                          </div>
+
+                          <div className="flex gap-2 pt-2">
+                            <Button 
+                              type="submit" 
+                              disabled={loading}
+                              className="flex-1"
+                            >
+                              {loading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  <span>Signing in...</span>
+                                </>
+                              ) : (
+                                <span>Sign In</span>
+                              )}
+                            </Button>
+                            
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={loading}
+                              className="flex-1"
+                              onClick={() => form.handleSubmit(handleEmailSignUp)()}
+                            >
+                              Sign Up
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
         </CardContent>
         
