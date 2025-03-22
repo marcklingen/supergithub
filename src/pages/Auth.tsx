@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -222,7 +223,7 @@ const Auth = () => {
           )}
           
           {isReauthMode && (
-            <Alert variant="info" className="mb-4">
+            <Alert variant="default" className="mb-4">
               <Info className="h-4 w-4" />
               <AlertTitle>Additional Permissions Needed</AlertTitle>
               <AlertDescription>
