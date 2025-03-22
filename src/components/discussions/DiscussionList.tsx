@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepo } from '@/contexts/RepoContext';
 import { useRepositoryDiscussions } from '@/lib/github';
+import { convertEmojiText } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   MessageCircle, 

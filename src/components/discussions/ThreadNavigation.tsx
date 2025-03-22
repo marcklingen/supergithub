@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import { useRepositoryDiscussions } from '@/lib/github';
 import { useAuth } from '@/contexts/AuthContext';
+import { convertEmojiText } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ThreadNavigationProps {

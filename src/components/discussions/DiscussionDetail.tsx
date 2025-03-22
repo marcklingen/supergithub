@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiscussionDetails, useRepositoryDiscussions } from '@/lib/github';
+import { convertEmojiText } from '@/lib/utils';
 import ThreadNavigation from './ThreadNavigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -255,7 +256,7 @@ const DiscussionDetail = () => {
               <div className="flex items-center gap-2 mb-1">
                 <div className="flex items-center gap-1 text-sm">
                   <span className="text-xl" role="img" aria-label={discussion.category.name}>
-                    {discussion.category.emoji}
+                    {convertEmojiText(discussion.category.emoji)}
                   </span>
                   <Badge variant="outline">{discussion.category.name}</Badge>
                 </div>
