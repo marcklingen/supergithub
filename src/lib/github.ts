@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -18,6 +17,9 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
   }
   
   console.log(`Fetching GitHub API with token: ${authToken ? 'Token provided' : 'No token'}`);
+  console.log('GitHub token length:', authToken.length);
+  console.log('Query:', query);
+  console.log('Variables:', variables);
   
   try {
     const response = await fetch(GITHUB_API_URL, {
@@ -29,24 +31,67 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
       body: JSON.stringify({ query, variables }),
     });
 
+    const responseData = await response.json();
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('GitHub API error response:', errorText);
+      console.error('GitHub API error response:', responseData);
       throw new Error(`GitHub API error: ${response.statusText} (${response.status})`);
     }
 
-    const data = await response.json();
-    
-    if (data.errors) {
-      console.error('GitHub GraphQL errors:', data.errors);
-      throw new Error(data.errors.map((e: any) => e.message).join('\n'));
+    if (responseData.errors) {
+      console.error('GitHub GraphQL errors:', responseData.errors);
+      throw new Error(responseData.errors.map((e: any) => e.message).join('\n'));
     }
     
-    return data.data;
+    return responseData.data;
   } catch (error) {
     console.error('Error fetching from GitHub API:', error);
     throw error;
   }
+}
+
+// Query hook for user's repositories
+export function useUserRepositories(token?: string) {
+  return useQuery({
+    queryKey: ['userRepositories', token],
+    queryFn: async () => {
+      // Ensure we have a token
+      if (!token) {
+        console.error('No GitHub token provided for useUserRepositories');
+        throw new Error('GitHub token is required to fetch repositories');
+      }
+      
+      const query = `
+        query GetUserRepositories {
+          viewer {
+            login
+            repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+              totalCount
+              nodes {
+                name
+                nameWithOwner
+                owner {
+                  login
+                }
+                description
+                url
+                stargazerCount
+                forkCount
+                hasDiscussionsEnabled
+                isPrivate
+              }
+            }
+          }
+        }
+      `;
+      
+      console.log('Fetching user repositories with token:', token ? 'Token available' : 'No token');
+      return fetchGitHubAPI(query, {}, token);
+    },
+    enabled: Boolean(token),
+    retry: 1,
+    retryDelay: 1000,
+  });
 }
 
 // Example query hook for user profile
@@ -78,46 +123,6 @@ export function useGitHubUserProfile(username: string, token?: string) {
       return fetchGitHubAPI(query, { username }, token);
     },
     enabled: Boolean(username) && Boolean(token || GITHUB_TOKEN),
-  });
-}
-
-// Query hook for user's repositories
-export function useUserRepositories(token?: string) {
-  return useQuery({
-    queryKey: ['userRepositories', token],
-    queryFn: async () => {
-      // Ensure we have a token
-      if (!token) {
-        console.error('No GitHub token provided for useUserRepositories');
-        throw new Error('GitHub token is required to fetch repositories');
-      }
-      
-      const query = `
-        query GetUserRepositories {
-          viewer {
-            login
-            repositories(first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
-              nodes {
-                name
-                nameWithOwner
-                owner {
-                  login
-                }
-                description
-                url
-                stargazerCount
-                forkCount
-                hasDiscussionsEnabled
-              }
-            }
-          }
-        }
-      `;
-      
-      console.log('Fetching user repositories with token:', token ? 'Token available' : 'No token');
-      return fetchGitHubAPI(query, {}, token);
-    },
-    enabled: Boolean(token),
   });
 }
 
