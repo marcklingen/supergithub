@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,17 +52,12 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Map client-side sort fields to GitHub API sort fields
   const mapSortField = (field: string): SortField => {
     switch (field) {
       case 'createdAt':
         return 'CREATED_AT';
       case 'updatedAt':
         return 'UPDATED_AT';
-      case 'upvotes':
-        return 'REACTIONS';
-      case 'comments':
-        return 'COMMENTS';
       default:
         return 'UPDATED_AT';
     }
@@ -288,8 +282,6 @@ const DiscussionList: React.FC<DiscussionListProps> = ({ prefetchedDiscussions =
             <SelectContent>
               <SelectItem value="updatedAt">Last Updated</SelectItem>
               <SelectItem value="createdAt">Created Date</SelectItem>
-              <SelectItem value="upvotes">Most Upvotes</SelectItem>
-              <SelectItem value="comments">Most Comments</SelectItem>
             </SelectContent>
           </Select>
           
