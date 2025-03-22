@@ -75,13 +75,19 @@ const Auth = () => {
       // Parse the hash fragment
       const hashParams = new URLSearchParams(hash.substring(1));
       const token = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
       const type = hashParams.get('type');
       
       if (token && type === 'recovery') {
         console.log('Password reset token detected');
         setAccessToken(token);
         setShowPasswordResetForm(true);
+        
+        // Set the access token in the Auth session manually
+        // This is needed because Supabase needs an active session for updateUser
+        supabase.auth.setSession({
+          access_token: token,
+          refresh_token: hashParams.get('refresh_token') || '',
+        });
         
         // Clean the URL and remove hash
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -111,13 +117,13 @@ const Auth = () => {
     // Check if user is already logged in
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session) {
+      if (data.session && !showPasswordResetForm) {
         navigate('/repositories');
       }
     };
     
     checkUser();
-  }, [navigate]);
+  }, [navigate, showPasswordResetForm]);
 
   async function handleGitHubSignIn() {
     try {
@@ -231,6 +237,20 @@ const Auth = () => {
         throw new Error("Reset token is missing");
       }
       
+      // First make sure we have an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        // If we don't have a session, show a specific error
+        toast({
+          title: "Error resetting password",
+          description: "Auth session missing! Please try clicking the reset link in your email again.",
+          variant: "destructive"
+        });
+        throw new Error("Auth session missing!");
+      }
+      
+      // Update the user's password
       const { error } = await supabase.auth.updateUser({
         password: values.password
       });
