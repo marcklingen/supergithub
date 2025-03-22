@@ -38,11 +38,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 const RepoSidebar = () => {
-  const { activeRepository, repositories, setActiveRepository, categories, setActiveCategory, activeCategory } = useRepo();
+  const { activeRepository, repositories, setActiveRepository, setActiveCategory, activeCategory } = useRepo();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const token = user?.user_metadata?.provider_token;
   
@@ -59,18 +61,29 @@ const RepoSidebar = () => {
   
   useEffect(() => {
     if (data?.repository?.discussionCategories?.nodes) {
-      // This would ideally be handled in RepoContext by providing a setCategories function
-      // But for simplicity, we'll manually update it here
+      console.log('Discussion categories loaded:', data.repository.discussionCategories.nodes);
       const categories = data.repository.discussionCategories.nodes.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
         emoji: cat.emoji,
         description: cat.description
       }));
-      // @ts-ignore - context doesn't expose setCategories but we know it exists
-      setActiveCategory(categories.length > 0 ? categories[0] : null);
+      
+      if (categories.length > 0) {
+        setActiveCategory(categories[0]);
+      } else {
+        setActiveCategory(null);
+      }
+    } else if (data?.repository && data.repository.hasDiscussionsEnabled === false) {
+      console.warn('Repository has discussions disabled');
+      toast({
+        title: "Discussions Disabled",
+        description: "This repository doesn't have discussions enabled.",
+        variant: "destructive"
+      });
+      setActiveCategory(null);
     }
-  }, [data, setActiveCategory]);
+  }, [data, setActiveCategory, toast]);
   
   const handleRepoChange = (repo: any) => {
     setActiveRepository(repo);
@@ -192,9 +205,13 @@ const RepoSidebar = () => {
                   </div>
                 </div>
               </div>
+            ) : data?.repository?.hasDiscussionsEnabled === false ? (
+              <div className="p-4 text-sm text-muted-foreground">
+                Discussions are not enabled for this repository.
+              </div>
             ) : data?.repository?.discussionCategories?.nodes?.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground">
-                No discussion categories found. Check if discussions are enabled for this repository.
+                No discussion categories found. Check if discussions are properly configured.
               </div>
             ) : (
               <SidebarMenu>

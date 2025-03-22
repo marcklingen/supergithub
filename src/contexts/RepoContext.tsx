@@ -24,9 +24,11 @@ interface RepoContextType {
   activeRepository: Repository | null;
   setActiveRepository: (repo: Repository | null) => void;
   categories: DiscussionCategory[];
+  setCategories: (categories: DiscussionCategory[]) => void;
   activeCategory: DiscussionCategory | null;
   setActiveCategory: (category: DiscussionCategory | null) => void;
   isLoadingCategories: boolean;
+  setIsLoadingCategories: (isLoading: boolean) => void;
 }
 
 const RepoContext = createContext<RepoContextType | undefined>(undefined);
@@ -64,6 +66,12 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
     } else {
       localStorage.removeItem('activeRepo');
     }
+  }, [activeRepository]);
+
+  // Clear active category when repository changes
+  useEffect(() => {
+    setActiveCategory(null);
+    setCategories([]);
   }, [activeRepository]);
 
   // Redirect to repo selection if no repositories and user is logged in
@@ -117,9 +125,11 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
       activeRepository,
       setActiveRepository,
       categories,
+      setCategories,
       activeCategory,
       setActiveCategory,
-      isLoadingCategories
+      isLoadingCategories,
+      setIsLoadingCategories
     }}>
       {children}
     </RepoContext.Provider>

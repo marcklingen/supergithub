@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
 
@@ -109,6 +109,11 @@ export function useRepositoryDiscussionCategories(owner: string, name: string, t
   return useQuery({
     queryKey: ['repositoryDiscussionCategories', owner, name, token],
     queryFn: async () => {
+      if (!token) {
+        console.error('No GitHub token provided for useRepositoryDiscussionCategories');
+        throw new Error('GitHub token is required for this operation');
+      }
+      
       const query = `
         query GetRepositoryDiscussionCategories($owner: String!, $name: String!) {
           repository(owner: $owner, name: $name) {
@@ -118,15 +123,21 @@ export function useRepositoryDiscussionCategories(owner: string, name: string, t
                 name
                 emoji
                 description
+                createdAt
+                updatedAt
               }
             }
+            hasDiscussionsEnabled
           }
         }
       `;
       
+      console.log('Fetching discussion categories for', owner, name);
       return fetchGitHubAPI(query, { owner, name }, token);
     },
     enabled: Boolean(owner) && Boolean(name) && Boolean(token),
+    retry: 2,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 
