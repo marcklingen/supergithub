@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -36,13 +35,21 @@ const Repositories = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  // Explicitly log token to help with debugging
   const token = user?.user_metadata?.provider_token;
+  console.log("GitHub token available:", !!token); // Debug log
   
+  // Make sure we pass the token to useUserRepositories
   const { 
     data: githubRepos, 
     isLoading: isLoadingRepos, 
-    isError: isReposError 
+    isError: isReposError,
+    error
   } = useUserRepositories(token);
+  
+  // Debug log to check what's coming back
+  console.log("GitHub repos response:", githubRepos);
+  console.log("GitHub repos error:", isReposError ? error : null);
 
   const handleAddRepository = () => {
     if (!repoInput.trim()) {

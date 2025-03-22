@@ -17,6 +17,8 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
     throw new Error('GitHub token is required for this operation');
   }
   
+  console.log(`Fetching GitHub API with token: ${authToken ? 'Token provided' : 'No token'}`);
+  
   try {
     const response = await fetch(GITHUB_API_URL, {
       method: 'POST',
@@ -28,12 +30,15 @@ async function fetchGitHubAPI(query: string, variables = {}, token?: string) {
     });
 
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('GitHub API error response:', errorText);
+      throw new Error(`GitHub API error: ${response.statusText} (${response.status})`);
     }
 
     const data = await response.json();
     
     if (data.errors) {
+      console.error('GitHub GraphQL errors:', data.errors);
       throw new Error(data.errors.map((e: any) => e.message).join('\n'));
     }
     
@@ -81,6 +86,12 @@ export function useUserRepositories(token?: string) {
   return useQuery({
     queryKey: ['userRepositories', token],
     queryFn: async () => {
+      // Ensure we have a token
+      if (!token) {
+        console.error('No GitHub token provided for useUserRepositories');
+        throw new Error('GitHub token is required to fetch repositories');
+      }
+      
       const query = `
         query GetUserRepositories {
           viewer {
@@ -103,6 +114,7 @@ export function useUserRepositories(token?: string) {
         }
       `;
       
+      console.log('Fetching user repositories with token:', token ? 'Token available' : 'No token');
       return fetchGitHubAPI(query, {}, token);
     },
     enabled: Boolean(token),

@@ -46,12 +46,12 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Add read:user scope to get basic profile info and user:email for email access
+      // Make sure to request 'repo' scope to get repository access
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: window.location.origin,
-          scopes: 'read:user user:email repo'
+          redirectTo: window.location.origin + '/auth', // Explicitly redirect to the /auth route
+          scopes: 'repo read:user user:email' // Ensure repo scope is included
         }
       });
 
