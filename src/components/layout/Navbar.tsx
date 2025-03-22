@@ -4,7 +4,25 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserCircle } from 'lucide-react';
+import { 
+  UserCircle,
+  LogOut,
+  Settings,
+  User
+} from 'lucide-react';
+import { 
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage 
+} from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface NavbarProps {
   className?: string;
@@ -14,6 +32,10 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user avatar URL from GitHub user metadata
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.user_name || user?.email || 'User';
   
   // Change navbar style on scroll
   useEffect(() => {
@@ -69,17 +91,43 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
         
         <div className="flex items-center space-x-3">
           {user ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <UserCircle className="h-6 w-6" />
-                <span className="text-sm hidden md:inline">
-                  {user.email || user.user_metadata?.full_name || 'User'}
-                </span>
-              </div>
-              <Button size="sm" variant="outline" onClick={handleSignOut}>
-                Sign Out
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full">
+                  <Avatar className="h-9 w-9 border-2 border-background hover:border-primary transition-colors cursor-pointer">
+                    <AvatarImage src={avatarUrl} alt={userName} />
+                    <AvatarFallback>
+                      {userName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
               <Button size="sm" variant="outline" onClick={() => navigate('/auth')}>
