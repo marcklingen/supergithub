@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2 } from 'lucide-react';
+import { GithubIcon, Loader2, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 // Schema for login form validation
 const loginSchema = z.object({
@@ -25,6 +26,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isDevMode, setIsDevMode] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -53,11 +55,7 @@ const Auth = () => {
     const errorDescription = url.searchParams.get('error_description');
     
     if (error) {
-      toast({
-        title: "Authentication Error",
-        description: errorDescription?.replace(/\+/g, ' ') || "There was an error during authentication",
-        variant: "destructive"
-      });
+      setLoginError(errorDescription?.replace(/\+/g, ' ') || "There was an error during authentication");
       
       // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -74,6 +72,14 @@ const Auth = () => {
 
   async function handleGitHubSignIn() {
     try {
+      // Clear any previous errors
+      setLoginError(null);
+      
+      if (loading) {
+        console.log('Already processing a sign-in request, ignoring');
+        return;
+      }
+      
       setLoading(true);
       console.log('Initiating GitHub sign-in');
       
@@ -88,17 +94,15 @@ const Auth = () => {
 
       if (error) {
         console.error('GitHub sign-in error:', error);
-        throw error;
+        setLoginError(error.message || "Error signing in with GitHub");
+        setLoading(false);
+        return;
       }
 
       console.log('GitHub sign-in initiated successfully');
     } catch (error: any) {
       console.error('Error in handleGitHubSignIn:', error);
-      toast({
-        title: "Error signing in with GitHub",
-        description: error.message || "An error occurred during GitHub sign in",
-        variant: "destructive"
-      });
+      setLoginError(error.message || "An error occurred during GitHub sign in");
       setLoading(false);
     }
     // Note: Not setting loading to false here because we're being redirected
@@ -106,6 +110,7 @@ const Auth = () => {
 
   async function handleEmailSignIn(values: LoginFormValues) {
     try {
+      setLoginError(null);
       setLoading(true);
       
       const { error } = await supabase.auth.signInWithPassword({
@@ -117,11 +122,7 @@ const Auth = () => {
       
       navigate('/repositories');
     } catch (error: any) {
-      toast({
-        title: "Error signing in",
-        description: error.message || "An error occurred during sign in",
-        variant: "destructive"
-      });
+      setLoginError(error.message || "An error occurred during sign in");
     } finally {
       setLoading(false);
     }
@@ -129,6 +130,7 @@ const Auth = () => {
 
   async function handleEmailSignUp(values: LoginFormValues) {
     try {
+      setLoginError(null);
       setLoading(true);
       
       const { error } = await supabase.auth.signUp({
@@ -146,11 +148,7 @@ const Auth = () => {
         description: "Please check your email to confirm your account",
       });
     } catch (error: any) {
-      toast({
-        title: "Error signing up",
-        description: error.message || "An error occurred during sign up",
-        variant: "destructive"
-      });
+      setLoginError(error.message || "An error occurred during sign up");
     } finally {
       setLoading(false);
     }
@@ -167,6 +165,14 @@ const Auth = () => {
         </CardHeader>
         
         <CardContent className="space-y-4">
+          {loginError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertDescription>{loginError}</AlertDescription>
+            </Alert>
+          )}
+          
           <Button 
             variant="outline" 
             className="w-full justify-center gap-2" 

@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { supabase as integrationSupabase } from '@/integrations/supabase/client';
 
 // These would normally come from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -7,45 +8,43 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Create a Supabase client with proper error handling
 const createSupabaseClient = () => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase URL or Anon Key not provided. Using Supabase client from integrations folder as fallback.');
-    // Import from the integrations folder instead
-    try {
-      // Use dynamic import to avoid build errors with require
-      const { supabase } = require('@/integrations/supabase/client');
-      console.log('Successfully imported Supabase client from integrations folder');
-      return supabase;
-    } catch (error) {
-      console.error('Failed to import Supabase client from integrations folder:', error);
+  try {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('Supabase URL or Anon Key not provided in environment variables. Using Supabase client from integrations folder as fallback.');
       
-      // Return a mock client that doesn't throw errors but logs warnings
-      return {
-        auth: {
-          getUser: async () => ({ data: { user: null }, error: null }),
-          getSession: async () => ({ data: { session: null }, error: null }),
-          signInWithOAuth: async () => {
-            console.warn('Supabase not configured: signInWithOAuth called');
-            return { data: null, error: { message: 'Supabase not configured' } };
-          },
-          signInWithPassword: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } }),
-          signUp: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } }),
-          signOut: async () => ({ error: null }),
-          onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
-        },
-        from: () => ({ select: () => Promise.resolve({ data: [], error: null }) }),
-      };
+      // Use the client from the integrations folder
+      return integrationSupabase;
     }
-  }
 
-  // If we have valid credentials, create a real client
-  console.log('Creating Supabase client with URL and key');
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-    }
-  });
+    // If we have valid credentials, create a real client
+    console.log('Creating Supabase client with URL and key from environment variables');
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error);
+    
+    // Return a mock client that doesn't throw errors but logs warnings
+    return {
+      auth: {
+        getUser: async () => ({ data: { user: null }, error: null }),
+        getSession: async () => ({ data: { session: null }, error: null }),
+        signInWithOAuth: async () => {
+          console.warn('Supabase not configured: signInWithOAuth called');
+          return { data: null, error: { message: 'Supabase not configured' } };
+        },
+        signInWithPassword: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } }),
+        signUp: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } }),
+        signOut: async () => ({ error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+      },
+      from: () => ({ select: () => Promise.resolve({ data: [], error: null }) }),
+    };
+  }
 };
 
 export const supabase = createSupabaseClient();
