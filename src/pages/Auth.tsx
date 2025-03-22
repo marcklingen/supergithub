@@ -1,16 +1,18 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2, Mail } from 'lucide-react';
+import { GithubIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Schema for login form validation
 const loginSchema = z.object({
@@ -25,6 +27,7 @@ const Auth = () => {
   const [isDevMode, setIsDevMode] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -61,41 +64,44 @@ const Auth = () => {
     }
   }, [toast]);
 
+  // Redirect if user is already logged in
   useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        navigate('/repositories');
-      }
-    };
-    
-    checkUser();
-  }, [navigate]);
+    if (user && !authLoading) {
+      console.log('User already logged in, redirecting to repositories');
+      navigate('/repositories');
+    }
+  }, [user, authLoading, navigate]);
 
   async function handleGitHubSignIn() {
     try {
       setLoading(true);
+      console.log('Initiating GitHub sign-in');
       
       // Make sure to request the proper scopes for repository access
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: window.location.origin + '/auth', // Explicitly redirect to the /auth route
+          redirectTo: `${window.location.origin}/auth`, // Explicitly redirect to the /auth route
           scopes: 'repo read:user user:email discussion', // All needed scopes for accessing discussions
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('GitHub sign-in error:', error);
+        throw error;
+      }
+
+      console.log('GitHub sign-in initiated successfully');
     } catch (error: any) {
+      console.error('Error in handleGitHubSignIn:', error);
       toast({
         title: "Error signing in with GitHub",
         description: error.message || "An error occurred during GitHub sign in",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
+    // Note: Not setting loading to false here because we're being redirected
   }
 
   async function handleEmailSignIn(values: LoginFormValues) {
@@ -165,7 +171,7 @@ const Auth = () => {
             variant="outline" 
             className="w-full justify-center gap-2" 
             onClick={handleGitHubSignIn}
-            disabled={loading}
+            disabled={loading || authLoading}
           >
             {loading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

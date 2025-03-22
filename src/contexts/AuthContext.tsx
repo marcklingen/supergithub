@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [githubToken, setGithubToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   // Improved function to extract GitHub token from user session
   const extractGitHubToken = (session: Session | null) => {
@@ -75,46 +76,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    try {
-      // Set up auth state listener FIRST
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    
+    const initializeAuth = async () => {
+      if (initialized) return;
+      
+      setLoading(true);
+      
+      try {
+        console.log("Initializing auth context...");
+        
+        // Set up auth state listener FIRST
+        const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
           console.log("Auth state changed, event:", event);
-          setSession(session);
-          setUser(session?.user ?? null);
-          const token = extractGitHubToken(session);
-          setGithubToken(token);
-          console.log("Auth state changed, token available:", !!token);
+          
+          if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setUser(null);
+            setGithubToken(null);
+            console.log("User signed out, clearing state");
+          } else {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            const token = extractGitHubToken(newSession);
+            setGithubToken(token);
+            console.log("Auth state updated, token available:", !!token);
+          }
+          
           setLoading(false);
+        });
+        
+        authSubscription = data.subscription;
+        
+        // THEN check for existing session
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          throw error;
         }
-      );
-
-      // THEN check for existing session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        const token = extractGitHubToken(session);
+        
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        
+        const token = extractGitHubToken(initialSession);
         setGithubToken(token);
+        
+        console.log("Initial session check complete, user:", !!initialSession?.user);
         console.log("Initial session check, token available:", !!token);
+        
+      } catch (error) {
+        console.error("Error in auth setup:", error);
+      } finally {
+        setInitialized(true);
         setLoading(false);
-      }).catch(error => {
-        console.error("Error getting session:", error);
-        setLoading(false);
-      });
-
-      return () => {
-        if (subscription && typeof subscription.unsubscribe === 'function') {
-          subscription.unsubscribe();
-        }
-      };
-    } catch (error) {
-      console.error("Error in auth setup:", error);
-      setLoading(false);
-    }
-  }, []);
+      }
+    };
+    
+    initializeAuth();
+    
+    return () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+    };
+  }, [initialized]);
 
   const signOut = async () => {
     console.log("Signing out...");
+    setLoading(true);
     
     try {
       // Clear all local state first
@@ -143,6 +173,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(null);
       setUser(null);
       setGithubToken(null);
+    } finally {
+      setLoading(false);
     }
   };
 
