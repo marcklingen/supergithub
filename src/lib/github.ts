@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -326,6 +325,24 @@ export function useDiscussionDetails(
                   isAnswer
                   replyTo {
                     id
+                  }
+                  replies(first: 20) {
+                    totalCount
+                    nodes {
+                      id
+                      author {
+                        login
+                        avatarUrl
+                        url
+                      }
+                      bodyHTML
+                      createdAt
+                      upvoteCount
+                      isAnswer
+                      replyTo {
+                        id
+                      }
+                    }
                   }
                   reactions(first: 10) {
                     nodes {

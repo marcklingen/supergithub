@@ -1,11 +1,9 @@
 
 import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { MessageSquare, User, ArrowUp, CheckCircle2, Loader2 } from 'lucide-react';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageSquare } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { ThreadedComment } from './ThreadedComment';
 
 interface CommentsListProps {
   comments: {
@@ -18,16 +16,20 @@ interface CommentsListProps {
 }
 
 export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
+  // Filter out replies so we only show top-level comments
+  const topLevelComments = comments.nodes.filter(comment => !comment.replyTo);
+  const totalCommentsCount = comments.totalCount + comments.nodes.filter((c: any) => c.isOptimistic).length;
+
   return (
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-6">
         <MessageSquare size={18} />
         <h3 className="text-lg font-medium">
-          Comments ({comments.totalCount + comments.nodes.filter((c: any) => c.isOptimistic).length})
+          Comments ({totalCommentsCount})
         </h3>
       </div>
       
-      {comments.nodes.length === 0 ? (
+      {topLevelComments.length === 0 ? (
         <Card className="border bg-muted/30 text-center p-6">
           <p className="text-muted-foreground">
             No comments yet.
@@ -35,66 +37,8 @@ export const CommentsList: React.FC<CommentsListProps> = ({ comments }) => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {comments.nodes.map((comment: any) => (
-            <Card 
-              key={comment.id} 
-              className={`border ${comment.isOptimistic ? 'bg-muted/10 border-dashed' : ''}`}
-            >
-              <CardHeader className="p-4 pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={comment.author.avatarUrl} alt={comment.author.login} />
-                      <AvatarFallback><User size={14} /></AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <a 
-                        href={comment.author.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="font-medium hover:underline"
-                      >
-                        {comment.author.login}
-                      </a>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}</span>
-                        {comment.isOptimistic && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <Loader2 size={10} className="animate-spin" />
-                              Posting...
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {comment.upvoteCount > 0 && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <ArrowUp size={14} />
-                      <span>{comment.upvoteCount}</span>
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-2">
-                <div 
-                  className="prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: comment.bodyHTML }}
-                />
-              </CardContent>
-              {comment.reactions && comment.reactions.nodes.length > 0 && (
-                <CardFooter className="p-4 pt-0 flex-wrap gap-1">
-                  {comment.reactions.nodes.map((reaction: any, index: number) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {reaction.content}
-                    </Badge>
-                  ))}
-                </CardFooter>
-              )}
-            </Card>
+          {topLevelComments.map((comment: any) => (
+            <ThreadedComment key={comment.id} comment={comment} />
           ))}
         </div>
       )}
