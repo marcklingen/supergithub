@@ -1,3 +1,4 @@
+
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -150,7 +151,7 @@ export function useRepositoryDiscussions(
   token?: string | null
 ) {
   return useQuery({
-    queryKey: ['repositoryDiscussions', owner, name, categoryId],
+    queryKey: ['repositoryDiscussions', owner, name, categoryId, after],
     queryFn: async () => {
       if (!token) {
         throw new Error('GitHub token is required for this operation');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRepo } from '@/contexts/RepoContext';
 import { useRepositoryDiscussions } from '@/lib/github';
@@ -47,12 +47,12 @@ interface Discussion {
 const DiscussionList = () => {
   const { githubToken } = useAuth();
   const { activeRepository, activeCategory } = useRepo();
-  const [activeDiscussionId, setActiveDiscussionId] = useState<number | null>(null);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   
   const { 
     data, 
@@ -77,7 +77,11 @@ const DiscussionList = () => {
   useEffect(() => {
     if (discussions.length > 0) {
       if (cursor) {
-        setAllDiscussions(prev => [...prev, ...discussions]);
+        setAllDiscussions(prev => {
+          const existingIds = new Set(prev.map(d => d.id));
+          const newDiscussions = discussions.filter(d => !existingIds.has(d.id));
+          return [...prev, ...newDiscussions];
+        });
       } else {
         setAllDiscussions(discussions);
       }
@@ -115,10 +119,13 @@ const DiscussionList = () => {
   }, [allDiscussions, selectedIndex, navigate]);
   
   useEffect(() => {
-    setCursor(undefined);
-    setAllDiscussions([]);
-    setSelectedIndex(-1);
-  }, [activeCategory?.id, activeRepository?.name]);
+    if (location.pathname === '/discussions') {
+      setCursor(undefined);
+      if (!data && activeCategory?.id && activeRepository?.name) {
+        refetch();
+      }
+    }
+  }, [activeCategory?.id, activeRepository?.name, location.pathname, data, refetch]);
   
   useEffect(() => {
     if (selectedIndex >= 0 && listRef.current) {
@@ -131,6 +138,14 @@ const DiscussionList = () => {
       }
     }
   }, [selectedIndex]);
+  
+  useEffect(() => {
+    if (location.pathname === '/discussions' && allDiscussions.length === 0 && 
+        activeCategory?.id && activeRepository?.name && !isLoading) {
+      refetch();
+    }
+  }, [location.pathname, allDiscussions.length, activeCategory?.id, 
+      activeRepository?.name, isLoading, refetch]);
   
   const handleLoadMore = () => {
     if (pageInfo?.hasNextPage) {
@@ -182,6 +197,9 @@ const DiscussionList = () => {
         <p className="text-muted-foreground mb-4">
           There are no discussions in this category yet.
         </p>
+        <Button onClick={() => refetch()} variant="outline">
+          Refresh Discussions
+        </Button>
       </Card>
     );
   }
