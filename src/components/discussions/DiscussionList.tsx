@@ -12,7 +12,10 @@ import {
   User, 
   Clock,
   ArrowUp,
-  Loader2
+  Loader2,
+  SortAsc,
+  SortDesc,
+  Filter
 } from 'lucide-react';
 import { 
   Card, 
@@ -22,6 +25,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 interface Discussion {
   id: string;
@@ -46,12 +63,17 @@ interface Discussion {
   };
 }
 
+type SortField = 'updatedAt' | 'createdAt' | 'upvoteCount';
+type SortOrder = 'asc' | 'desc';
+
 const DiscussionList = () => {
   const { githubToken } = useAuth();
   const { activeRepository, activeCategory } = useRepo();
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [allDiscussions, setAllDiscussions] = useState<Discussion[]>([]);
+  const [sortField, setSortField] = useState<SortField>('updatedAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,6 +127,13 @@ const DiscussionList = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!allDiscussions.length) return;
+      
+      // Don't capture keyboard events when an input is focused
+      if (document.activeElement?.tagName === 'INPUT' || 
+          document.activeElement?.tagName === 'TEXTAREA' ||
+          document.activeElement?.tagName === 'SELECT') {
+        return;
+      }
       
       switch (e.key) {
         case 'ArrowDown':
@@ -171,6 +200,28 @@ const DiscussionList = () => {
   const handleDiscussionClick = (discussion: Discussion) => {
     navigate(`/discussions/${discussion.number}`);
   };
+
+  const handleSortChange = (value: string) => {
+    setSortField(value as SortField);
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
+  };
+  
+  const getSortedDiscussions = () => {
+    return [...allDiscussions].sort((a, b) => {
+      if (sortField === 'upvoteCount') {
+        return sortOrder === 'asc' 
+          ? a.upvoteCount - b.upvoteCount 
+          : b.upvoteCount - a.upvoteCount;
+      } else {
+        const dateA = new Date(a[sortField]).getTime();
+        const dateB = new Date(b[sortField]).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+    });
+  };
   
   if (isLoading && !allDiscussions.length) {
     return (
@@ -218,15 +269,45 @@ const DiscussionList = () => {
       </Card>
     );
   }
+
+  const sortedDiscussions = getSortedDiscussions();
   
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground mb-2">
-        {totalCount} {totalCount === 1 ? 'discussion' : 'discussions'} in this category
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="text-sm text-muted-foreground">
+          {totalCount} {totalCount === 1 ? 'discussion' : 'discussions'} in this category
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Select
+            value={sortField}
+            onValueChange={handleSortChange}
+          >
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="updatedAt">Last Updated</SelectItem>
+              <SelectItem value="createdAt">Created Date</SelectItem>
+              <SelectItem value="upvoteCount">Upvotes</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSortOrder}
+            className="h-9 px-3"
+            title={`Sort ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
+          >
+            {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+          </Button>
+        </div>
       </div>
       
       <div ref={listRef} className="space-y-2">
-        {allDiscussions.map((discussion: Discussion, index: number) => (
+        {sortedDiscussions.map((discussion: Discussion, index: number) => (
           <Card 
             key={discussion.id}
             className={`discussion-item border hover:border-primary/50 transition-colors cursor-pointer ${
