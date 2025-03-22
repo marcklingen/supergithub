@@ -34,9 +34,8 @@ const KeyboardShortcutBar: React.FC = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-sm z-50 py-2 px-4">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center">
           <Keyboard size={14} className="text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">Keyboard Shortcuts</span>
         </div>
         
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
