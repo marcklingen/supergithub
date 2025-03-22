@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
@@ -28,7 +27,8 @@ import {
   ExternalLink,
   RotateCcw,
   ShieldAlert,
-  Info
+  Info,
+  KeyRound
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -259,7 +259,7 @@ const Repositories = () => {
                         size="sm" 
                         onClick={() => setTokenDialogOpen(true)}
                       >
-                        <Key size={14} className="mr-2" />
+                        <KeyRound size={14} className="mr-2" />
                         Set GitHub Token
                       </Button>
                     </AlertDescription>
@@ -267,7 +267,7 @@ const Repositories = () => {
                 )}
                 
                 {githubRepos?._orgAccessError && (
-                  <Alert variant="warning" className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+                  <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
                     <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <AlertTitle className="text-amber-800 dark:text-amber-400">Limited Access Permissions</AlertTitle>
                     <AlertDescription className="text-amber-700 dark:text-amber-500">
@@ -309,20 +309,18 @@ const Repositories = () => {
                     </div>
                   </div>
                 ) : (
-                  <div>
+                  <Tabs defaultValue="all" className="w-full">
                     <div className="flex items-center mb-4 justify-between">
-                      <Tabs defaultValue="all" className="flex-1">
-                        <TabsList>
-                          <TabsTrigger value="all">All</TabsTrigger>
-                          <TabsTrigger value="personal">Personal</TabsTrigger>
-                          <TabsTrigger value="organization" disabled={githubRepos?._orgAccessError}>
-                            Organization
-                            {githubRepos?._orgAccessError && (
-                              <span className="ml-1 text-xs text-amber-500">⚠️</span>
-                            )}
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
+                      <TabsList>
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="personal">Personal</TabsTrigger>
+                        <TabsTrigger value="organization" disabled={githubRepos?._orgAccessError}>
+                          Organization
+                          {githubRepos?._orgAccessError && (
+                            <span className="ml-1 text-xs text-amber-500">⚠️</span>
+                          )}
+                        </TabsTrigger>
+                      </TabsList>
                     </div>
                     
                     <TabsContent value="all" className="space-y-4">
@@ -605,7 +603,7 @@ const Repositories = () => {
                         </>
                       )}
                     </TabsContent>
-                  </div>
+                  </Tabs>
                 )}
               </CardContent>
             </Card>

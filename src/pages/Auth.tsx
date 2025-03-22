@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { GithubIcon, Loader2, AlertTriangle, Key } from 'lucide-react';
+import { GithubIcon, Loader2, AlertTriangle, KeyRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -15,7 +14,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-// Schema for login form validation
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -39,13 +37,11 @@ const Auth = () => {
       password: '',
     },
   });
-  
-  // Extract URL parameters
+
   const searchParams = new URLSearchParams(location.search);
   const reauth = searchParams.get('reauth') === 'true';
   const includeOrgScope = searchParams.get('scope') === 'read:org';
 
-  // Check if in development mode (based on environment)
   useEffect(() => {
     const isDevelopment = import.meta.env.MODE === 'development' || 
                          window.location.hostname === 'localhost' || 
@@ -54,7 +50,6 @@ const Auth = () => {
     console.log('Development mode:', isDevelopment);
   }, []);
 
-  // Extract error from URL if present
   useEffect(() => {
     const url = new URL(window.location.href);
     const error = url.searchParams.get('error');
@@ -63,12 +58,10 @@ const Auth = () => {
     if (error) {
       setLoginError(errorDescription?.replace(/\+/g, ' ') || "There was an error during authentication");
       
-      // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [toast]);
 
-  // Redirect if user is already logged in (but not if we're doing a reauth)
   useEffect(() => {
     if (user && !authLoading && !reauth) {
       console.log('User already logged in, redirecting to repositories');
@@ -78,7 +71,6 @@ const Auth = () => {
 
   async function handleGitHubSignIn() {
     try {
-      // Clear any previous errors
       setLoginError(null);
       
       if (loading) {
@@ -89,10 +81,8 @@ const Auth = () => {
       setLoading(true);
       console.log('Initiating GitHub sign-in');
       
-      // Define scopes based on whether we need org access
       let scopes = 'repo read:user user:email write:discussion write:issue';
       
-      // Add read:org scope if requested
       if (includeOrgScope) {
         scopes += ' read:org';
         console.log('Including read:org scope for organization access');
@@ -119,7 +109,6 @@ const Auth = () => {
       setLoginError(error.message || "An error occurred during GitHub sign in");
       setLoading(false);
     }
-    // Note: Not setting loading to false here because we're being redirected
   }
 
   async function handleEmailSignIn(values: LoginFormValues) {
@@ -195,7 +184,7 @@ const Auth = () => {
           )}
           
           {includeOrgScope && (
-            <Alert variant="warning" className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+            <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-800 dark:text-amber-400">Organization Access Required</AlertTitle>
               <AlertDescription className="text-amber-700 dark:text-amber-500">
