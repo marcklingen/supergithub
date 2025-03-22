@@ -15,7 +15,7 @@ import { AlertTriangle } from 'lucide-react';
 import { convertEmojiText } from '@/lib/utils';
 
 const Discussions = () => {
-  const { activeRepository, activeCategory } = useRepo();
+  const { activeRepository, activeCategory, categories, setActiveCategory } = useRepo();
   const { githubToken, setManualGithubToken } = useAuth();
   const { discussionNumber } = useParams<{ discussionNumber: string }>();
   const navigate = useNavigate();
@@ -32,6 +32,41 @@ const Discussions = () => {
       return () => clearTimeout(timer);
     }
   }, [githubToken]);
+  
+  // Add keyboard navigation for categories
+  useEffect(() => {
+    if (!categories.length || !activeRepository) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle keyboard shortcuts when not in a discussion detail view
+      if (discussionNumber) return;
+      
+      // Don't capture keyboard events when an input is focused
+      if (document.activeElement?.tagName === 'INPUT' || 
+          document.activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      const currentIndex = categories.findIndex(cat => cat.id === activeCategory?.id);
+      
+      switch (e.key) {
+        case '1': case '2': case '3': case '4': case '5': 
+        case '6': case '7': case '8': case '9':
+          const numericIndex = parseInt(e.key) - 1;
+          if (numericIndex >= 0 && numericIndex < categories.length) {
+            e.preventDefault();
+            setActiveCategory(categories[numericIndex]);
+          }
+          break;
+          
+        default:
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [categories, activeCategory, discussionNumber, setActiveCategory]);
   
   const handleSetToken = () => {
     if (!tokenInput.trim()) {

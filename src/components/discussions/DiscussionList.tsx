@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,6 +96,8 @@ const DiscussionList = () => {
         });
       } else {
         setAllDiscussions(discussions);
+        // Initialize selection index to 0 when new discussions load
+        setSelectedIndex(0);
       }
     }
   }, [discussions, cursor]);
@@ -115,6 +118,7 @@ const DiscussionList = () => {
           setSelectedIndex(prev => Math.max(prev - 1, 0));
           break;
         case 'Enter':
+          e.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < allDiscussions.length) {
             const discussion = allDiscussions[selectedIndex];
             navigate(`/discussions/${discussion.number}`);
@@ -230,6 +234,13 @@ const DiscussionList = () => {
             }`}
             onClick={() => handleDiscussionClick(discussion)}
             onMouseEnter={() => setSelectedIndex(index)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleDiscussionClick(discussion);
+              }
+            }}
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-4">
