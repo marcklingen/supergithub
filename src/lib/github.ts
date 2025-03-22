@@ -1,4 +1,3 @@
-
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 const GITHUB_API_URL = 'https://api.github.com/graphql';
@@ -151,13 +150,12 @@ export function useRepositoryDiscussions(
   token?: string | null
 ) {
   return useQuery({
-    queryKey: ['repositoryDiscussions', owner, name, categoryId, first, after, token],
+    queryKey: ['repositoryDiscussions', owner, name, categoryId],
     queryFn: async () => {
       if (!token) {
         throw new Error('GitHub token is required for this operation');
       }
       
-      // Updated query based on the GitHub Discussions API documentation
       const query = `
         query GetRepositoryDiscussions(
           $owner: String!, 
@@ -224,6 +222,8 @@ export function useRepositoryDiscussions(
       );
     },
     enabled: Boolean(owner) && Boolean(name) && Boolean(categoryId) && Boolean(token),
+    staleTime: 1000 * 60 * 5, // Keep data fresh for 5 minutes
+    gcTime: 1000 * 60 * 10, // Keep unused data in cache for 10 minutes
   });
 }
 
@@ -240,7 +240,6 @@ export function useDiscussionDetails(
         throw new Error('GitHub token is required for this operation');
       }
       
-      // Updated query based on the GitHub Discussions API documentation
       const query = `
         query GetDiscussionDetails($owner: String!, $name: String!, $number: Int!) {
           repository(owner: $owner, name: $name) {
