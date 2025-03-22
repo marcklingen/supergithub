@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import RepositoryDropdown from './RepositoryDropdown';
 import DiscussionCategories from './DiscussionCategories';
-import NavigationLinks from './NavigationLinks';
 import UserProfile from './UserProfile';
 
 const RepoSidebar = () => {
@@ -42,7 +41,7 @@ const RepoSidebar = () => {
       <div className="flex-1 overflow-auto">
         <RepositoryDropdown />
         <DiscussionCategories />
-        <NavigationLinks />
+        {/* NavigationLinks component removed from here */}
       </div>
       
       <UserProfile />
