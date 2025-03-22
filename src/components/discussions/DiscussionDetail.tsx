@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRepo } from '@/contexts/RepoContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -80,6 +81,18 @@ const DiscussionDetail = () => {
   const handleBackClick = () => {
     navigate('/discussions');
   };
+  
+  // Add useEffect to handle the Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleBackClick();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   if (isLoading) {
     return (
@@ -187,10 +200,19 @@ const DiscussionDetail = () => {
   return (
     <>
       <div className="flex items-center justify-between gap-4 mb-4">
-        <Button variant="ghost" size="sm" onClick={handleBackClick}>
-          <ChevronLeft size={16} className="mr-1" />
-          Back
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" onClick={handleBackClick}>
+                <ChevronLeft size={16} className="mr-1" />
+                Back <kbd className="ml-1 text-xs">ESC</kbd>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Go back to list (ESC)</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
         <div className="flex items-center gap-2">
           <TooltipProvider>
@@ -394,4 +416,3 @@ const DiscussionDetail = () => {
 };
 
 export default DiscussionDetail;
-
