@@ -73,8 +73,8 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
               </div>
             </div>
             
-            {/* Only show reply button if this is a first-level comment (depth = 0) */}
-            {onReplyClick && depth === 0 && (
+            {/* Show reply button for comments up to a certain depth */}
+            {onReplyClick && depth < maxDepth - 1 && (
               <Button 
                 size="sm" 
                 variant="ghost" 
